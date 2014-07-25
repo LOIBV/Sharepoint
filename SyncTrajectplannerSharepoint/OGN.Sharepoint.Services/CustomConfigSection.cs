@@ -3,12 +3,23 @@ using System.Configuration;
 
 namespace OGN.Sharepoint.Services
 {
-
+    /* Classes to have a configSection in web.config to configure the permissions to set when deactivating a SharePoint site.
+     * For example (web.config snippets),
+     *   <configSections>
+     *     <section name="sp.sitepermissions.deactivate" type="OGN.Sharepoint.Services.SitePermissionsSection"/>
+     *   </configSections>
+     *   <sp.sitepermissions.deactivate>
+     *     <permissions>
+     *       <add sitegroup="Opleidingscatalogus Members" permission="Read"/>
+     *       <add sitegroup="Opleidingscatalogus Owners" permission="Full Control"/>
+     *       <add sitegroup="Opleidingscatalogus Visitors" permission="Read"/>
+     *     </permissions>
+     *   </sp.sitepermissions.deactivate>
+     */
     public class SitePermissionsSection : ConfigurationSection
     {
         [ConfigurationProperty("permissions", IsDefaultCollection = false)]
-        [ConfigurationCollection(typeof(SitePermissions),
-            AddItemName = "add")]
+        [ConfigurationCollection(typeof(SitePermissions), AddItemName = "add")]
         public SitePermissions Permissions
         {
             get
