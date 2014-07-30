@@ -28,6 +28,11 @@ namespace OGN.Sharepoint.Services
         private string _link2edu_list;
         private string _link2mod_list;
 
+        System.Net.Mail.SmtpClient _mailer;
+        private string _mailfrom;
+        private string _mail2admin;
+        private string _mail2business;
+
         //PowerShell: New-EventLog -LogName Application -Source OGN_Sharepoint_Services_SyncEduSitesService
         private string _eventlogsource = "OGN_Sharepoint_Services_SyncEduSitesService";
 
@@ -57,7 +62,52 @@ namespace OGN.Sharepoint.Services
             _edutemplate = ConfigurationManager.AppSettings["sp.edusite:template"];
             _link2mod_list = ConfigurationManager.AppSettings["sp.edusite:list2mod"];
             _eventlogsource = ConfigurationManager.AppSettings["eventlogsource"];
+
+            _mailer = new System.Net.Mail.SmtpClient();
+            _mailfrom = ConfigurationManager.AppSettings["smtp:from"];
+            _mail2business = ConfigurationManager.AppSettings["smtp.sitecreatednotification:to"];
+            _mail2admin = ConfigurationManager.AppSettings["smtp.errornotification:to"];
         }
+
+        private void SendNotification2Business(string subject, string body)
+        {
+            try
+            {
+                _mailer.SendAsync(_mailfrom, _mail2business, subject, body, "business");
+            }
+            catch (Exception e)
+            {
+                EventLog.WriteEntry(_eventlogsource, e.Message + "\n\nmail subject: " + subject + "\nmail body" + body, EventLogEntryType.Error);
+            }
+        }
+
+        private void MailCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            if (e.Error == null)
+            {
+                this.LogWarning("mail", new OperationReport());
+            }
+            else
+            {
+                EventLog.WriteEntry(_eventlogsource, e.Error.Message + "\nMAIL ERROR", EventLogEntryType.Error);
+            }
+        }
+
+        private void SendNotification2Admin(string subject, string body)
+        {
+            _mailer.SendCompleted += new System.Net.Mail.SendCompletedEventHandler(MailCompleted);
+            try
+            {
+                _mailer.SendAsync(_mailfrom, _mail2admin, subject, body, "admin");
+            }
+            catch (Exception e)
+            {
+                EventLog.WriteEntry(_eventlogsource, e.Message + "\n\nmail subject: " + subject + "\nmail body" + body, EventLogEntryType.Error);
+            }
+        }
+
+
+
 
         #region ErrorHandlingAndLogging
         /// <summary>
@@ -87,6 +137,7 @@ namespace OGN.Sharepoint.Services
             }
             EventLog.WriteEntry(_eventlogsource, msg, EventLogEntryType.Error);
             EventLog.WriteEntry(_eventlogsource, tracedump, EventLogEntryType.Error);
+            this.SendNotification2Admin("OGN.SharePoint.Services: error", msg + "\n" + tracedump);
             throw new FaultException<string>(msg, "Error");
         }
         /// <summary>
@@ -109,6 +160,7 @@ namespace OGN.Sharepoint.Services
             EventLog.WriteEntry(_eventlogsource, msg, EventLogEntryType.Error);
             EventLog.WriteEntry(_eventlogsource, tracedump, EventLogEntryType.Error);
             EventLog.WriteEntry(_eventlogsource, e.Message, EventLogEntryType.Error);
+            this.SendNotification2Admin("OGN.SharePoint.Services: exceptie", msg + "\n" + tracedump + "\n" + e.Message);
             throw new FaultException<string>(msg, "Exception");
         }
         /// <summary>
@@ -428,6 +480,7 @@ namespace OGN.Sharepoint.Services
                     report.Messages.Add("Site gemaakt.");
                     this.AddTerm(ctx, _edu_id, edu);
                     report.Messages.Add("Term gemaakt.");
+                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '"+edu.GetTitle()+"'", edu.GetUrl(_home_url));
                 }
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(edu):\n" + e.Message, report); }
@@ -463,6 +516,8 @@ namespace OGN.Sharepoint.Services
                 ClientContext ctx = this.GetSite(edu.GetUrl(_home_url));
                 this.ChangePermissions(ctx);
                 report.Messages.Add("Permissies ingetrokken.");
+                this.SendNotification2Business("Permissies gewijzigd van SharePoint site voor opleiding"
+                               , "De permissies zijn gewijzigd omdat de opleiding inactief is geworden.\n" + edu.GetUrl(_home_url));
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(edu):\n" + e.Message, report); }
             return report;
@@ -486,6 +541,8 @@ namespace OGN.Sharepoint.Services
                     report.Messages.Add("Site gemaakt.");
                     this.AddTerm(ctx, _mod_id, mod);
                     report.Messages.Add("Term gemaakt.");
+                    this.SendNotification2Business("Nieuwe SharePoint site voor module '" + mod.GetTitle() + "'", mod.GetUrl(_home_url));
+
                 }
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(mod):\n" + e.Message, report); }
@@ -520,6 +577,8 @@ namespace OGN.Sharepoint.Services
                 ClientContext ctx = this.GetSite(mod.GetUrl(_home_url));
                 this.ChangePermissions(ctx);
                 report.Messages.Add("Permissies ingetrokken.");
+                this.SendNotification2Business("Permissies gewijzigd van SharePoint site voor module"
+                               , "De permissies zijn gewijzigd omdat de module inactief is geworden.\n" + mod.GetUrl(_home_url));
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(mod):\n" + e.Message, report); }
             return report;
@@ -593,11 +652,11 @@ namespace OGN.Sharepoint.Services
         }
 
         public OperationReport Test()
-        {             
+        {
             OperationReport report = new OperationReport();
             try
             {
-                report.Messages.Add("Dit is de Test operatie van deze service.");
+                report.Messages.Add("Dit is de Test operatie van deze service..");
                 this.LogInfo("Er is getest: Test().", report);
                 report.Messages.Add("Hier is niet veel gebeurd.");
             }
