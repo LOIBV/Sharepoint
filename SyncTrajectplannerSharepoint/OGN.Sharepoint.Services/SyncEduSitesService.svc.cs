@@ -38,19 +38,10 @@ namespace OGN.Sharepoint.Services
 
         public SyncEduSitesService()
         {
-            //get web.config settings       
-            SecureString _pass = new SecureString();
-            _pass.AppendChar('V');
-            _pass.AppendChar('a');
-            _pass.AppendChar('l');
-            _pass.AppendChar('u');
-            _pass.AppendChar('e');
-            _pass.AppendChar('3');
-            _pass.AppendChar('l');
-            _pass.AppendChar('u');
+            //get web.config settings
             //the credentials of the application pool are used.
             _creds = CredentialCache.DefaultNetworkCredentials; 
-            //_creds = new NetworkCredential("gmichels", _pass, "ad"); //for testing
+            //_creds = new NetworkCredential(user, pass, "ad"); //for testing
 
             _home_url = ConfigurationManager.AppSettings["sp.sitecollection:url"];
             _loi_id = new Guid(ConfigurationManager.AppSettings["sp.termstore:id"]);
