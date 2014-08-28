@@ -17,7 +17,8 @@ namespace OGN.Sharepoint.Services
     public class SyncEduSitesService : ISyncEduSitesService
     {
         //web.config settings (see constructor)
-        private string _home_url;
+        private string _mod_url;
+        private string _edu_url;
         private NetworkCredential _creds;
         private Guid _loi_id;
         private Guid _cat_id;
@@ -41,9 +42,10 @@ namespace OGN.Sharepoint.Services
             //get web.config settings
             //the credentials of the application pool are used.
             _creds = CredentialCache.DefaultNetworkCredentials; 
-            //_creds = new NetworkCredential(user, pass, "ad"); //for testing
+            //_creds = new NetworkCredential(user,pass, "ad"); //for testing
 
-            _home_url = ConfigurationManager.AppSettings["sp.sitecollection:url"];
+            _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
+            _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
             _loi_id = new Guid(ConfigurationManager.AppSettings["sp.termstore:id"]);
             _cat_id = new Guid(ConfigurationManager.AppSettings["sp.termstore.termset:id"]);
             _mod_id = new Guid(ConfigurationManager.AppSettings["sp.termstore.termset.modset:id"]);
@@ -271,7 +273,7 @@ namespace OGN.Sharepoint.Services
         /// </summary>
         /// <param name="ctx">SP context</param>
         /// <param name="edumod">eduprogramme or module</param>
-        private void ChangePermissions(ClientContext ctx)
+        private void ChangePermissions(ClientContext ctx, bool isEdu)
         {
             Web site = ctx.Web;
             site.BreakRoleInheritance(false,false);
@@ -286,8 +288,16 @@ namespace OGN.Sharepoint.Services
              *   If the securable object is a site, and the clearsubscopes parameter is false, the role assignments for all child securable objects which do not inherit role assignments from their parent object must remain unchanged.
              */
             ctx.ExecuteQuery();
-            
-            SitePermissionsSection config = (SitePermissionsSection)ConfigurationManager.GetSection("sp.sitepermissions.deactivate");
+
+            SitePermissionsSection config;
+            if (isEdu)
+            {
+                config = (SitePermissionsSection)ConfigurationManager.GetSection("sp.sitepermissions.edu.deactivate");
+            }
+            else
+            {
+                config = (SitePermissionsSection)ConfigurationManager.GetSection("sp.sitepermissions.mod.deactivate");
+            }
 
             foreach (PermissionBindingConfigElement item in config.Permissions)
             {
@@ -396,7 +406,7 @@ namespace OGN.Sharepoint.Services
             foreach (ListItem item in items)
             {
                 FieldUrlValue url = (FieldUrlValue)item["URL"];
-                if (url.Url.Equals(linkto.GetUrl(_home_url)))
+                if (url.Url.Equals(linkto.GetUrl()))
                 {
                     url.Description = linkto.GetTitle();
                     item["URL"] = url;
@@ -460,7 +470,7 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Maak opleiding: id->"+edu.Id+", code->"+edu.Code+", naam->"+edu.Name);
-                ClientContext ctx = this.GetSite(_home_url);
+                ClientContext ctx = this.GetSite(_edu_url);
                 if (this.SiteExists(ctx, edu))
                 {
                     this.LogWarning("Site niet gemaakt. Opleiding bestaat al.", report);
@@ -471,7 +481,7 @@ namespace OGN.Sharepoint.Services
                     report.Messages.Add("Site gemaakt.");
                     this.AddTerm(ctx, _edu_id, edu);
                     report.Messages.Add("Term gemaakt.");
-                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '"+edu.GetTitle()+"'", edu.GetUrl(_home_url));
+                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '"+edu.GetTitle()+"'", edu.GetUrl());
                 }
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(edu):\n" + e.Message, report); }
@@ -485,7 +495,7 @@ namespace OGN.Sharepoint.Services
             {
                 report.Messages.Add("Wijzig opleidingsnaam: id->" + edu.Id + ", code->" + edu.Code + ", nieuwe naam->" + edu.Name);
 
-                ClientContext ctx = this.GetSite(edu.GetUrl(_home_url));
+                ClientContext ctx = this.GetSite(edu.GetUrl());
                 this.ChangeTitle(ctx, edu);
                 report.Messages.Add("Site titel gewijzigd.");
                 this.AddTerm(ctx, _edu_id, edu);
@@ -504,11 +514,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Deactiveer opleidingssite: id->" + edu.Id);
-                ClientContext ctx = this.GetSite(edu.GetUrl(_home_url));
-                this.ChangePermissions(ctx);
+                ClientContext ctx = this.GetSite(edu.GetUrl());
+                this.ChangePermissions(ctx, true);
                 report.Messages.Add("Permissies ingetrokken.");
                 this.SendNotification2Business("Permissies gewijzigd van SharePoint site voor opleiding"
-                               , "De permissies zijn gewijzigd omdat de opleiding inactief is geworden.\n" + edu.GetUrl(_home_url));
+                               , "De permissies zijn gewijzigd omdat de opleiding inactief is geworden.\n" + edu.GetUrl());
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(edu):\n" + e.Message, report); }
             return report;
@@ -521,7 +531,7 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Maak module: id->" + mod.Id + ", code->" + mod.Code + ", naam->" + mod.Name);
-                ClientContext ctx = this.GetSite(_home_url);
+                ClientContext ctx = this.GetSite(_mod_url);
                 if (this.SiteExists(ctx, mod))
                 {
                     this.LogWarning("Site niet gemaakt. Module bestaat al.", report);
@@ -532,7 +542,7 @@ namespace OGN.Sharepoint.Services
                     report.Messages.Add("Site gemaakt.");
                     this.AddTerm(ctx, _mod_id, mod);
                     report.Messages.Add("Term gemaakt.");
-                    this.SendNotification2Business("Nieuwe SharePoint site voor module '" + mod.GetTitle() + "'", mod.GetUrl(_home_url));
+                    this.SendNotification2Business("Nieuwe SharePoint site voor module '" + mod.GetTitle() + "'", mod.GetUrl());
 
                 }
             }
@@ -547,7 +557,7 @@ namespace OGN.Sharepoint.Services
             {
                 report.Messages.Add("Wijzig modulenaam: id->" + mod.Id + ", code->" + mod.Code + ", nieuwe naam->" + mod.Name);
 
-                ClientContext ctx = this.GetSite(mod.GetUrl(_home_url));
+                ClientContext ctx = this.GetSite(mod.GetUrl());
                 this.ChangeTitle(ctx, mod);
                 report.Messages.Add("Site titel gewijzigd.");
                 this.AddTerm(ctx, _mod_id, mod);
@@ -565,11 +575,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Deactiveer modulesite: id->" + mod.Id);
-                ClientContext ctx = this.GetSite(mod.GetUrl(_home_url));
-                this.ChangePermissions(ctx);
+                ClientContext ctx = this.GetSite(mod.GetUrl());
+                this.ChangePermissions(ctx, false);
                 report.Messages.Add("Permissies ingetrokken.");
                 this.SendNotification2Business("Permissies gewijzigd van SharePoint site voor module"
-                               , "De permissies zijn gewijzigd omdat de module inactief is geworden.\n" + mod.GetUrl(_home_url));
+                               , "De permissies zijn gewijzigd omdat de module inactief is geworden.\n" + mod.GetUrl());
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(mod):\n" + e.Message, report); }
             return report;
@@ -582,25 +592,25 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Maak links: opl_id->" + link.EduProgramme.Id + ", mod_id->" + link.Module.Id);
-                ClientContext ctx_edu = this.GetSite(link.EduProgramme.GetUrl(_home_url));
-                ClientContext ctx_mod = this.GetSite(link.Module.GetUrl(_home_url));
+                ClientContext ctx_edu = this.GetSite(link.EduProgramme.GetUrl());
+                ClientContext ctx_mod = this.GetSite(link.Module.GetUrl());
 
-                if (this.LinkExists(ctx_edu, _link2mod_list, link.Module.GetUrl(_home_url)))
+                if (this.LinkExists(ctx_edu, _link2mod_list, link.Module.GetUrl()))
                 {
                     this.LogWarning("Link naar modulesite niet gemaakt. Link bestaat al.", report);
                 }
                 else
                 {
-                    this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(_home_url), this.GetTitle(ctx_mod));
+                    this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(), this.GetTitle(ctx_mod));
                     report.Messages.Add("Link naar modulesite gemaakt.");
                 }
-                if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(_home_url)))
+                if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl()))
                 {
                     this.LogWarning("Link naar opleidingssite niet gemaakt. Link bestaat al.", report);
                 }
                 else
                 {
-                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(_home_url), this.GetTitle(ctx_edu));
+                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(), this.GetTitle(ctx_edu));
                     report.Messages.Add("Link naar opleidingssite gemaakt.");
                 }
             }
@@ -631,11 +641,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Verwijder links: opl_id->" + link.EduProgramme.Id + ", mod_id->" + link.Module.Id);
-                ClientContext ctx_edu = this.GetSite(link.EduProgramme.GetUrl(_home_url));
-                this.DeleteLink(ctx_edu, _link2mod_list, link.Module.GetUrl(_home_url));
+                ClientContext ctx_edu = this.GetSite(link.EduProgramme.GetUrl());
+                this.DeleteLink(ctx_edu, _link2mod_list, link.Module.GetUrl());
                 report.Messages.Add("Link naar modulesite verwijderd.");
-                ClientContext ctx_mod = this.GetSite(link.Module.GetUrl(_home_url));
-                this.DeleteLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(_home_url));
+                ClientContext ctx_mod = this.GetSite(link.Module.GetUrl());
+                this.DeleteLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl());
                 report.Messages.Add("Link naar opleidingssite verwijderd.");
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(link):\n" + e.Message, report); }
@@ -677,11 +687,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Onbepaalde actie op opleiding: id->" + edu.Id + ", code->" + edu.Code + ", naam->" + edu.Name);
-                ClientContext ctx = this.GetSite(_home_url);
+                ClientContext ctx = this.GetSite(_edu_url);
                 if (this.SiteExists(ctx, edu))
                 {
                     report.Messages.Add("De opleidingssite bestaat al.");
-                    ClientContext ctx_edu = this.GetSite(edu.GetUrl(_home_url));
+                    ClientContext ctx_edu = this.GetSite(edu.GetUrl());
                     string oldname = this.GetTitle(ctx_edu);
                     string newname = edu.GetTitle();
                     if (oldname.Equals(newname))
@@ -715,11 +725,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Onbepaalde actie op module: id->" + mod.Id + ", code->" + mod.Code + ", naam->" + mod.Name);
-                ClientContext ctx = this.GetSite(_home_url);
+                ClientContext ctx = this.GetSite(_mod_url);
                 if (this.SiteExists(ctx, mod))
                 {
                     report.Messages.Add("De modulesite bestaat al.");
-                    ClientContext ctx_mod = this.GetSite(mod.GetUrl(_home_url));
+                    ClientContext ctx_mod = this.GetSite(mod.GetUrl());
                     string oldname = this.GetTitle(ctx_mod);
                     string newname = mod.GetTitle();
                     if (oldname.Equals(newname))

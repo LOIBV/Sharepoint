@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
+using System.Configuration;
 
 namespace OGN.Sharepoint.Services
 {
@@ -81,7 +82,7 @@ namespace OGN.Sharepoint.Services
         /// </summary>
         /// <param name="baseurl">the url of the parent site</param>
         /// <returns></returns>
-        string GetUrl(string baseurl); 
+        string GetUrl(); 
     }
 
     [DataContract(Namespace="http://teamwise.ogn.eu/services/", Name="Wijziging {0}")]
@@ -178,15 +179,15 @@ namespace OGN.Sharepoint.Services
             return (string.Empty.Equals(this.Code))?this.Name:this.Name + " " + this.Code; 
         }
 
-        public string GetUrl(string baseurl)
+        public string GetUrl()
         {
-            return baseurl + this.GetSiteName();
+            return ConfigurationManager.AppSettings["sp.sitecollection:edu:url"] + this.GetSiteName();
         }
 
 
         public string GetSiteName()
         {
-            return "O" + System.Web.HttpUtility.UrlEncode(this.Id);
+            return System.Web.HttpUtility.UrlEncode(this.Id);
         }
     }
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "OpleidingRef")]
@@ -260,15 +261,14 @@ namespace OGN.Sharepoint.Services
             return (string.Empty.Equals(this.Code)) ? this.Name : this.Name + " " + this.Code; 
         }
 
-        public string GetUrl(string baseurl)
+        public string GetUrl()
         {
-            return baseurl + this.GetSiteName();
+            return ConfigurationManager.AppSettings["sp.sitecollection:mod:url"] + this.GetSiteName();
         }
-
 
         public string GetSiteName()
         {
-            return "M" + System.Web.HttpUtility.UrlEncode(this.Id);
+            return System.Web.HttpUtility.UrlEncode(this.Id);
         }
     }
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "ModuleRef")]
