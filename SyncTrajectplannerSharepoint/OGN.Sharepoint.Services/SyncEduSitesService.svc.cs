@@ -25,6 +25,7 @@ namespace OGN.Sharepoint.Services
         private Guid _mod_id;
         private Guid _edu_id;
         private string _modtemplate;
+        private int _lcid;
         private string _edutemplate;
         private string _link2edu_list;
         private string _link2mod_list;
@@ -46,6 +47,7 @@ namespace OGN.Sharepoint.Services
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
+            _lcid = Int32.Parse(ConfigurationManager.AppSettings["sp.site:lcid"]);
             _loi_id = new Guid(ConfigurationManager.AppSettings["sp.termstore:id"]);
             _cat_id = new Guid(ConfigurationManager.AppSettings["sp.termstore.termset:id"]);
             _mod_id = new Guid(ConfigurationManager.AppSettings["sp.termstore.termset.modset:id"]);
@@ -235,6 +237,7 @@ namespace OGN.Sharepoint.Services
             newsite.Title = edumod.GetTitle();
             newsite.Url = edumod.GetSiteName();
             newsite.UseSamePermissionsAsParentSite = true;
+            newsite.Language = _lcid;
             site.Webs.Add(newsite);
             ctx.ExecuteQuery();
         }
