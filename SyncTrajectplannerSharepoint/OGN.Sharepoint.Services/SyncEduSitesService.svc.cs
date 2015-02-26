@@ -322,7 +322,7 @@ namespace OGN.Sharepoint.Services
         /// <param name="ctx">SP context</param>
         /// <param name="listtitle">the name of the list of links in which a link is created</param>
         /// <param name="linkto">the eduprogramme or module to which the link targets</param>
-        private void CreateLink(ClientContext ctx, string listtitle, string linktourl, string linktodescr)
+        private void CreateLink(ClientContext ctx, string listtitle, string linktourl, string linktodescr, string comments)
         {
             Web site = ctx.Web;
             List list = site.Lists.GetByTitle(listtitle);
@@ -333,6 +333,7 @@ namespace OGN.Sharepoint.Services
             url.Url = linktourl; //linkto.GetUrl(_home_url);
             url.Description = linktodescr; //linkto.GetTitle();
             item["URL"] =  url;
+            item["Comments"] = comments;
             
             item.Update(); 
             ctx.ExecuteQuery();
@@ -450,7 +451,7 @@ namespace OGN.Sharepoint.Services
             ctx.ExecuteQuery();
         }
 
-        private void CreateLink(ClientContext site, string name_link_list, string link, string link_descr, OperationReport report)
+        private void CreateLink(ClientContext site, string name_link_list, string link, string link_descr, string comments, OperationReport report)
         {
             if (this.LinkExists(site, name_link_list, link))
             {
@@ -458,7 +459,7 @@ namespace OGN.Sharepoint.Services
             }
             else
             {
-                this.CreateLink(site, name_link_list, link, link_descr);
+                this.CreateLink(site, name_link_list, link, link_descr, comments);
                 report.Messages.Add("Link gemaakt.");
             }
         }
@@ -502,9 +503,9 @@ namespace OGN.Sharepoint.Services
                         if (this.SiteExists(ctx, loisite))
                         {
                             ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), report);
+                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi),"Opleidingssite", report);
                             report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
-                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), report);
+                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), "Opleidingssite", report);
                             report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
                         }
                         else
@@ -563,7 +564,7 @@ namespace OGN.Sharepoint.Services
             OperationReport report = new OperationReport();
             try
             {
-                report.Messages.Add("Maak module: id->" + mod.Id + ", code->" + mod.Code + ", naam->" + mod.Name);
+                report.Messages.Add("Maak module: id->" + mod.Id + ", code->" + mod.Code + ", naam->" + mod.Name + ", LOI site->" + mod.LOISite);
                 ClientContext ctx = this.GetSite(_mod_url);
                 if (this.SiteExists(ctx, mod))
                 {
@@ -581,9 +582,9 @@ namespace OGN.Sharepoint.Services
                         if (this.SiteExists(ctx, loisite))
                         {
                             ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                            CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi), report);
+                            CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi),"modulesite", report);
                             report.Messages.Add("Link naar LOI modulesite gemaakt.");
-                            CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), report);
+                            CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), "modulesite", report);
                             report.Messages.Add("Link vanuit LOI modulesite gemaakt.");
                         }
                         else
@@ -651,7 +652,7 @@ namespace OGN.Sharepoint.Services
                 }
                 else
                 {
-                    this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(), this.GetTitle(ctx_mod));
+                    this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(), this.GetTitle(ctx_mod),string.Empty);
                     report.Messages.Add("Link naar modulesite gemaakt.");
                 }
                 if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl()))
@@ -660,7 +661,7 @@ namespace OGN.Sharepoint.Services
                 }
                 else
                 {
-                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(), this.GetTitle(ctx_edu));
+                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(), this.GetTitle(ctx_edu), string.Empty);
                     report.Messages.Add("Link naar opleidingssite gemaakt.");
                 }
             }
