@@ -66,6 +66,7 @@ namespace OGN.Sharepoint.Services
         /// name of programme or module
         /// </summary>
         string Name { get; set; }
+        string LOISite { get; set; }
         
         /// <summary>
         /// the title of the site
@@ -155,6 +156,7 @@ namespace OGN.Sharepoint.Services
         string _id;
         string _code;
         string _name;
+        string _loisite;
 
         public string Id
         {
@@ -172,6 +174,12 @@ namespace OGN.Sharepoint.Services
         {
             get { return _name; }
             set { _name = value; }
+        }
+
+        public string LOISite
+        {
+            get { return _loisite; }
+            set { _loisite = value; }
         }
 
         public string GetTitle()
@@ -229,6 +237,13 @@ namespace OGN.Sharepoint.Services
             get { return base.Name; }
             set { base.Name = value; }
         }
+
+        [DataMember(Name = "LOISite", IsRequired = true)]
+        new public string LOISite
+        {
+            get { return base.LOISite; }
+            set { base.LOISite = value; }
+        }
     }
 
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "Module")]
@@ -237,6 +252,7 @@ namespace OGN.Sharepoint.Services
         string _id;
         string _code;
         string _name;
+        string _loisite;
 
         public string Id
         {
@@ -254,6 +270,12 @@ namespace OGN.Sharepoint.Services
         {
             get { return _name; }
             set { _name = value; }
+        }
+
+        public string LOISite
+        {
+            get { return _loisite; }
+            set { _loisite = value; }
         }
 
         public string GetTitle()
@@ -309,6 +331,13 @@ namespace OGN.Sharepoint.Services
         {
             get { return base.Name; }
             set { base.Name = value; }
+        }
+
+        [DataMember(Name = "LOISite", IsRequired = true)]
+        new public string LOISite
+        {
+            get { return base.LOISite; }
+            set { base.LOISite = value; }
         }
     }
 

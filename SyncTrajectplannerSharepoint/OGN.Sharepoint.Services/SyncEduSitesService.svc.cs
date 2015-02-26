@@ -450,6 +450,18 @@ namespace OGN.Sharepoint.Services
             ctx.ExecuteQuery();
         }
 
+        private void CreateLink(ClientContext site, string name_link_list, string link, string link_descr, OperationReport report)
+        {
+            if (this.LinkExists(site, name_link_list, link))
+            {
+                this.LogWarning("Link niet gemaakt. Link bestaat al.", report);
+            }
+            else
+            {
+                this.CreateLink(site, name_link_list, link, link_descr);
+                report.Messages.Add("Link gemaakt.");
+            }
+        }
 
         #endregion
 
@@ -472,7 +484,7 @@ namespace OGN.Sharepoint.Services
             OperationReport report = new OperationReport();
             try
             {
-                report.Messages.Add("Maak opleiding: id->"+edu.Id+", code->"+edu.Code+", naam->"+edu.Name);
+                report.Messages.Add("Maak opleiding: id->" + edu.Id + ", code->" + edu.Code + ", naam->" + edu.Name + ", LOI site->" + edu.LOISite);
                 ClientContext ctx = this.GetSite(_edu_url);
                 if (this.SiteExists(ctx, edu))
                 {
@@ -482,6 +494,24 @@ namespace OGN.Sharepoint.Services
                 {
                     this.CreateSite(ctx, edu, _edutemplate);
                     report.Messages.Add("Site gemaakt.");
+                    if (!string.IsNullOrEmpty(edu.LOISite))
+                    {
+                        report.Messages.Add("Maak link van en naar LOI opleidingssite.");
+                        ClientContext ctx_edu = this.GetSite(edu.GetUrl());
+                        EduProgrammeRef loisite = new EduProgrammeRef(edu.LOISite);
+                        if (this.SiteExists(ctx, loisite))
+                        {
+                            ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
+                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), report);
+                            report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
+                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), report);
+                            report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
+                        }
+                        else
+                        {
+                            this.LogWarning("Link vanuit LOI opleidingssite niet gemaakt. LOI opleidingssite bestaat niet.", report);
+                        }
+                    }
                     this.AddTerm(ctx, _edu_id, edu);
                     report.Messages.Add("Term gemaakt.");
                     this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '"+edu.GetTitle()+"'", edu.GetUrl());
@@ -543,6 +573,24 @@ namespace OGN.Sharepoint.Services
                 {
                     this.CreateSite(ctx, mod, _modtemplate);
                     report.Messages.Add("Site gemaakt.");
+                    if (!string.IsNullOrEmpty(mod.LOISite))
+                    {
+                        report.Messages.Add("Maak link van en naar LOI modulesite.");
+                        ClientContext ctx_mod = this.GetSite(mod.GetUrl());
+                        ModuleRef loisite = new ModuleRef(mod.LOISite);
+                        if (this.SiteExists(ctx, loisite))
+                        {
+                            ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
+                            CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi), report);
+                            report.Messages.Add("Link naar LOI modulesite gemaakt.");
+                            CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), report);
+                            report.Messages.Add("Link vanuit LOI modulesite gemaakt.");
+                        }
+                        else
+                        {
+                            this.LogWarning("Link vanuit LOI modulesite niet gemaakt. LOI modulesite bestaat niet.", report);
+                        }
+                    }
                     this.AddTerm(ctx, _mod_id, mod);
                     report.Messages.Add("Term gemaakt.");
                     this.SendNotification2Business("Nieuwe SharePoint site voor module '" + mod.GetTitle() + "'", mod.GetUrl());
@@ -587,7 +635,6 @@ namespace OGN.Sharepoint.Services
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(mod):\n" + e.Message, report); }
             return report;
         }
-
 
         public OperationReport Create(Link link)
         {
