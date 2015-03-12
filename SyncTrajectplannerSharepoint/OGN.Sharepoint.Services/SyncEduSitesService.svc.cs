@@ -228,6 +228,19 @@ namespace OGN.Sharepoint.Services
             return ctx.Web.Title;
         }
 
+
+
+        public void DeleteSubsites(string url)
+        {
+            ClientContext ctx = new ClientContext(url);
+            Web site = ctx.Web;
+            foreach (Web subsite in site.Webs)
+            {
+                subsite.DeleteObject();
+            }
+            ctx.ExecuteQuery();
+        }
+
         /// <summary>
         /// add the title of an eduprogramme or module as a term to SP term store
         /// </summary>

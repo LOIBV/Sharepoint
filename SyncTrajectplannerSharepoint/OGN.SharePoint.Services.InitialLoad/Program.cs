@@ -12,6 +12,23 @@ namespace OGN.SharePoint.Services.InitialLoad
     {
         static void Main(string[] args)
         {
+            if (args.Length==0)
+            {
+                Program.Create();
+            } 
+            else
+            {
+                if (args[0].Equals("ALLESWEG")) { Program.AllesWeg(args[1]); }
+            }
+        }
+
+        static void AllesWeg(string s)
+        {
+            SyncEduSitesService svc = new SyncEduSitesService();
+            svc.DeleteSubsites(s);
+        }
+        static void Create()
+        {
             SyncEduSitesService svc = new SyncEduSitesService();
             char[] delim = { ';' };
 
@@ -25,11 +42,12 @@ namespace OGN.SharePoint.Services.InitialLoad
                     for (int i = 1; i < opl.Length; i++)
                     {
                         log.WriteLine("Opleiding;" + opl[i]);
-                        string[] val = opl[i].Split(delim, 3);
+                        string[] val = opl[i].Split(delim, 4);
                         EduProgrammeVal edu = new EduProgrammeVal();
                         edu.Id = val[0];
                         edu.Code = val[1];
                         edu.Name = val[2];
+                        edu.LOISite = val[3];
                         try
                         {
                             svc.Create(edu);
@@ -44,11 +62,12 @@ namespace OGN.SharePoint.Services.InitialLoad
                     for (int i = 1; i < mods.Length; i++)
                     {
                         log.WriteLine("Module;" + mods[i]);
-                        string[] val = mods[i].Split(delim, 3);
+                        string[] val = mods[i].Split(delim, 4);
                         ModuleVal mod = new ModuleVal();
                         mod.Id = val[0];
                         mod.Code = val[1];
                         mod.Name = val[2];
+                        mod.LOISite = val[3];
                         try
                         {
                             svc.Create(mod);
