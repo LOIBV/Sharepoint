@@ -30,8 +30,12 @@ namespace OGN.Sharepoint.Services
         private string _modsubtemplate;
         private string _modsub_title;
         private string _modsub_id;
+        private string _moddoclib_berichten;
+        private string _moddoclib_examendossier;
         private int _lcid;
         private string _edutemplate;
+        private string _edudoclib_berichten;
+        private string _edudoclib_examendossier;
         private string _link2edu_list;
         private string _link2edu_list_column;
         private string _link2edu_list_value;
@@ -70,7 +74,11 @@ namespace OGN.Sharepoint.Services
             _modsubtemplate = ConfigurationManager.AppSettings["sp.modsite.subsite:template"];
             _modsub_title = ConfigurationManager.AppSettings["sp.modsite.subsite:title"];
             _modsub_id = ConfigurationManager.AppSettings["sp.modsite.subsite:id"];
+            _moddoclib_berichten = ConfigurationManager.AppSettings["sp.modsite:doclib:berichten"];
+            _moddoclib_examendossier = ConfigurationManager.AppSettings["sp.modsite:doclib:examendossier"];
             _edutemplate = ConfigurationManager.AppSettings["sp.edusite:template"];
+            _edudoclib_berichten = ConfigurationManager.AppSettings["sp.edusite:doclib:berichten"];
+            _edudoclib_examendossier = ConfigurationManager.AppSettings["sp.edusite:doclib:examendossier"];
             _link2mod_list = ConfigurationManager.AppSettings["sp.edusite:list2mod"];
             _link2mod_list_column = ConfigurationManager.AppSettings["sp.edusite:list2mod:column"];
             _link2mod_list_value = ConfigurationManager.AppSettings["sp.edusite:list2mod:value"];
@@ -271,6 +279,40 @@ namespace OGN.Sharepoint.Services
             site.Webs.Add(newsite);
             ctx.ExecuteQuery();
         }
+
+        private void ChangePermissions(ClientContext ctx, string doclib, string section)
+        {
+
+            Web site = ctx.Web;
+            List list = site.Lists.GetByTitle(doclib);
+            list.BreakRoleInheritance(false, false);
+            /* BreakRoleInheritance(copyRoleAssignments,clearSubscopes)
+             * copyRoleAssignments
+             *   Type: System.Boolean
+             *   Specifies whether to copy the role assignments from the parent securable object.
+             *   If the value is false, the collection of role assignments must contain only 1 role assignment containing the current user after the operation.
+             * clearSubscopes
+             *   Type: System.Boolean
+             *   If the securable object is a site, and the clearsubscopes parameter is true, the role assignments for all child securable objects in the current site and in the sites which inherit role assignments from the current site must be cleared and those securable objects will inherit role assignments from the current site after this call.
+             *   If the securable object is a site, and the clearsubscopes parameter is false, the role assignments for all child securable objects which do not inherit role assignments from their parent object must remain unchanged.
+             */
+            ctx.ExecuteQuery();
+
+            SitePermissionsSection config = (SitePermissionsSection)ConfigurationManager.GetSection(section);
+            foreach (PermissionBindingConfigElement item in config.Permissions)
+            {
+                Group sitegroup = site.SiteGroups.GetByName(item.SiteGroup);
+                
+                RoleDefinition permission = site.RoleDefinitions.GetByName(item.Permission);
+                RoleDefinitionBindingCollection rdbs = new RoleDefinitionBindingCollection(ctx);
+
+                rdbs.Add(permission);
+                list.RoleAssignments.Add(sitegroup, rdbs);
+            }
+            ctx.ExecuteQuery();
+
+        }
+            
 
         /// <summary>
         /// returns true if site for eduprogramme or module exists
@@ -532,13 +574,18 @@ namespace OGN.Sharepoint.Services
                 else
                 {
                     this.CreateSite(ctx, edu, _edutemplate);
-                    report.Messages.Add("Site gemaakt.");
+                    report.Messages.Add("Site gemaakt.");                    
+                    ClientContext ctx_edu = this.GetSite(edu.GetUrl());
+                    ChangePermissions(ctx_edu, _edudoclib_berichten, "sp.sitepermissions.edu.doclib.berichten");
+                    report.Messages.Add("Permissies Doc.Lib. voor berichten aangepast.");
+                    ClientContext ctx_edu2 = this.GetSite(edu.GetUrl());
+                    ChangePermissions(ctx_edu, _edudoclib_examendossier, "sp.sitepermissions.edu.doclib.examendossier");
+                    report.Messages.Add("Permissies Doc.Lib. voor examendossiers aangepast.");
                     CreateLink(ctx, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
                     report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
                     if (!string.IsNullOrEmpty(edu.LOISite))
                     {
                         report.Messages.Add("Maak link van en naar LOI opleidingssite.");
-                        ClientContext ctx_edu = this.GetSite(edu.GetUrl());
                         EduProgrammeRef loisite = new EduProgrammeRef(edu.LOISite);
                         if (this.SiteExists(ctx, loisite))
                         {
@@ -619,6 +666,11 @@ namespace OGN.Sharepoint.Services
                     ClientContext ctx_mod = this.GetSite(mod.GetUrl());
                     this.CreateSite(ctx_mod, _modsub_title, _modsub_id, _modsubtemplate);
                     report.Messages.Add("Subsite gemaakt.");
+                    //change permissions doc lib
+                    ChangePermissions(ctx_mod, _moddoclib_berichten, "sp.sitepermissions.mod.doclib.berichten");
+                    report.Messages.Add("Permissies Doc.Lib. voor berichten aangepast.");
+                    ChangePermissions(ctx_mod, _moddoclib_examendossier, "sp.sitepermissions.mod.doclib.examendossier");
+                    report.Messages.Add("Permissies Doc.Lib. voor examendossiers aangepast.");
                     //create links from and to module site
                     if (!string.IsNullOrEmpty(mod.LOISite))
                     {
