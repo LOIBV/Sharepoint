@@ -25,6 +25,9 @@ namespace OGN.Sharepoint.Services
         private Guid _mod_id;
         private Guid _edu_id;
         private string _modtemplate;
+        private string _modsubtemplate;
+        private string _modsub_title;
+        private string _modsub_id;
         private int _lcid;
         private string _edutemplate;
         private string _link2edu_list;
@@ -43,7 +46,6 @@ namespace OGN.Sharepoint.Services
             //get web.config settings
             //the credentials of the application pool are used.
             _creds = CredentialCache.DefaultNetworkCredentials; 
-            //_creds = new NetworkCredential(user,pass, "ad"); //for testing
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
@@ -54,6 +56,9 @@ namespace OGN.Sharepoint.Services
             _edu_id = new Guid(ConfigurationManager.AppSettings["sp.termstore.termset.eduset:id"]);
             _modtemplate = ConfigurationManager.AppSettings["sp.modsite:template"];
             _link2edu_list = ConfigurationManager.AppSettings["sp.modsite:list2edu"];
+            _modsubtemplate = ConfigurationManager.AppSettings["sp.modsite.subsite:template"];
+            _modsub_title = ConfigurationManager.AppSettings["sp.modsite.subsite:title"];
+            _modsub_id = ConfigurationManager.AppSettings["sp.modsite.subsite:id"];
             _edutemplate = ConfigurationManager.AppSettings["sp.edusite:template"];
             _link2mod_list = ConfigurationManager.AppSettings["sp.edusite:list2mod"];
             _eventlogsource = ConfigurationManager.AppSettings["eventlogsource"];
@@ -230,12 +235,24 @@ namespace OGN.Sharepoint.Services
         /// <param name="template">site template id</param>
         private void CreateSite(ClientContext ctx, IEduModSite edumod, string template)
         {
+            this.CreateSite(ctx, edumod.GetTitle(), edumod.GetSiteName(), template);
+        }
+
+        /// <summary>
+        /// create a SP site
+        /// </summary>
+        /// <param name="ctx">SP context</param>
+        /// <param name="title">title of site</param>
+        /// <param name="url">url of site</param>
+        /// <param name="template">site template id</param>
+        private void CreateSite(ClientContext ctx, string title, string url, string template)
+        {
             Web site = ctx.Web;
 
             WebCreationInformation newsite = new WebCreationInformation();
             newsite.WebTemplate = template;
-            newsite.Title = edumod.GetTitle();
-            newsite.Url = edumod.GetSiteName();
+            newsite.Title = title;
+            newsite.Url = url;
             newsite.UseSamePermissionsAsParentSite = true;
             newsite.Language = _lcid;
             site.Webs.Add(newsite);
@@ -572,12 +589,17 @@ namespace OGN.Sharepoint.Services
                 }
                 else
                 {
+                    //create module site
                     this.CreateSite(ctx, mod, _modtemplate);
                     report.Messages.Add("Site gemaakt.");
+                    //create subsite
+                    ClientContext ctx_mod = this.GetSite(mod.GetUrl());
+                    this.CreateSite(ctx_mod, _modsub_title, _modsub_id, _modsubtemplate);
+                    report.Messages.Add("Subsite gemaakt.");
+                    //create links from and to module site
                     if (!string.IsNullOrEmpty(mod.LOISite))
                     {
                         report.Messages.Add("Maak link van en naar LOI modulesite.");
-                        ClientContext ctx_mod = this.GetSite(mod.GetUrl());
                         ModuleRef loisite = new ModuleRef(mod.LOISite);
                         if (this.SiteExists(ctx, loisite))
                         {
@@ -592,6 +614,7 @@ namespace OGN.Sharepoint.Services
                             this.LogWarning("Link vanuit LOI modulesite niet gemaakt. LOI modulesite bestaat niet.", report);
                         }
                     }
+                    //create term in store
                     this.AddTerm(ctx, _mod_id, mod);
                     report.Messages.Add("Term gemaakt.");
                     this.SendNotification2Business("Nieuwe SharePoint site voor module '" + mod.GetTitle() + "'", mod.GetUrl());
