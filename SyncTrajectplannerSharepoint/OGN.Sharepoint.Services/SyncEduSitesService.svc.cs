@@ -619,10 +619,10 @@ namespace OGN.Sharepoint.Services
                 ClientContext ctx = this.GetSite(edu.GetUrl());
                 this.ChangeTitle(ctx, edu);
                 report.Messages.Add("Site titel gewijzigd.");
-                this.AddTerm(ctx, _edu_id, edu);
-                report.Messages.Add("Term gemaakt.");
                 this.UpdateAllLinksToEduOrMod(ctx, _link2mod_list, edu);
                 report.Messages.Add("Beschrijvingen van links naar deze site gewijzigd.");
+                this.AddTerm(ctx, _edu_id, edu);
+                report.Messages.Add("Term gemaakt.");
                 
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Update(edu):\n" + e.Message, report); }
@@ -710,10 +710,10 @@ namespace OGN.Sharepoint.Services
                 ClientContext ctx = this.GetSite(mod.GetUrl());
                 this.ChangeTitle(ctx, mod);
                 report.Messages.Add("Site titel gewijzigd.");
-                this.AddTerm(ctx, _mod_id, mod);
-                report.Messages.Add("Term gemaakt.");
                 this.UpdateAllLinksToEduOrMod(ctx, _link2edu_list, mod);
                 report.Messages.Add("Beschrijvingen van links naar deze site gewijzigd.");
+                this.AddTerm(ctx, _mod_id, mod);
+                report.Messages.Add("Term gemaakt.");
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Update(mod):\n" + e.Message, report); }
             return report;
