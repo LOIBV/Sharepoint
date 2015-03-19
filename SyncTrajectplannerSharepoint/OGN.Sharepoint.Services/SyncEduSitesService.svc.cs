@@ -507,6 +507,10 @@ namespace OGN.Sharepoint.Services
         /// <param name="linkto">the eduprogramme or module to which the link targets</param>
         private void UpdateLink(ClientContext ctx, string listtitle, IEduModSite linkto)
         {
+            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.GetUrl(), string.Empty,string.Empty);
+        }
+        private void UpdateLink(ClientContext ctx, string listtitle, string linktitle, string linkurl, string column, string val)
+        {
             Web site = ctx.Web;
 
             List list = site.Lists.GetByTitle(listtitle);
@@ -520,10 +524,11 @@ namespace OGN.Sharepoint.Services
             foreach (ListItem item in items)
             {
                 FieldUrlValue url = (FieldUrlValue)item["URL"];
-                if (url.Url.Equals(linkto.GetUrl()))
+                if (url.Url.Equals(linkurl))
                 {
-                    url.Description = linkto.GetTitle();
+                    url.Description = linktitle;
                     item["URL"] = url;
+                    if (column.Equals(string.Empty)) { } else { item[column] = val; }
                     item.Update();
                     break;
                 }
@@ -650,6 +655,9 @@ namespace OGN.Sharepoint.Services
                 report.Messages.Add("Site titel gewijzigd.");
                 this.UpdateAllLinksToEduOrMod(ctx, _link2mod_list, edu);
                 report.Messages.Add("Beschrijvingen van links naar deze site gewijzigd.");
+                ClientContext ctx_home = this.GetSite(_edu_url);
+                UpdateLink(ctx_home, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
+                report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
                 this.AddTerm(ctx, _edu_id, edu);
                 report.Messages.Add("Term gemaakt.");
                 
