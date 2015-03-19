@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OGN.Sharepoint.Services;
 using System.IO;
+using System.Configuration;
 
 namespace OGN.SharePoint.Services.InitialLoad
 {
@@ -29,7 +30,7 @@ namespace OGN.SharePoint.Services.InitialLoad
         }
         static void Create()
         {
-            SyncEduSitesService svc = new SyncEduSitesService();
+            SyncEduSitesService svc = new SyncEduSitesService(false);
             char[] delim = { ';' };
 
             File.WriteAllText("log.csv","");

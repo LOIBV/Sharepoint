@@ -11,6 +11,7 @@ using System.Text;
 using System.Net;
 using System.Diagnostics;
 using System.Configuration;
+using System.Web.Configuration;
 
 namespace OGN.Sharepoint.Services
 {
@@ -47,16 +48,22 @@ namespace OGN.Sharepoint.Services
         private string _mailfrom;
         private string _mail2admin;
         private string _mail2business;
+        private Configuration configfile;
 
         //PowerShell: New-EventLog -LogName Application -Source OGN_Sharepoint_Services_SyncEduSitesService
         private string _eventlogsource = "OGN_Sharepoint_Services_SyncEduSitesService";
 
-        public SyncEduSitesService()
+        public SyncEduSitesService() : this(true) { }
+        public SyncEduSitesService(bool isWeb)
         {
-            //get web.config settings
+            //get web. or app.config settings
+            configfile = isWeb
+                ? WebConfigurationManager.OpenWebConfiguration("~/")
+                : ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
             //the credentials of the application pool are used.
-            _creds = CredentialCache.DefaultNetworkCredentials; 
-            //_creds = new NetworkCredential("user", "pass", "ad"); //for testing
+            //_creds = CredentialCache.DefaultNetworkCredentials; 
+            _creds = new NetworkCredential("adm-gmichels", "hZpU=0(kXG=Bku", "ad"); //for testing
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
@@ -293,37 +300,47 @@ namespace OGN.Sharepoint.Services
             ctx.ExecuteQuery();
         }
 
-        private void ChangePermissions(ClientContext ctx, string doclib, string section)
+        private enum SiteType {edu,mod};
+        private void ChangePermissions(ClientContext ctx, SiteType sitetype)
         {
-
-            Web site = ctx.Web;
-            List list = site.Lists.GetByTitle(doclib);
-            list.BreakRoleInheritance(false, false);
-            /* BreakRoleInheritance(copyRoleAssignments,clearSubscopes)
-             * copyRoleAssignments
-             *   Type: System.Boolean
-             *   Specifies whether to copy the role assignments from the parent securable object.
-             *   If the value is false, the collection of role assignments must contain only 1 role assignment containing the current user after the operation.
-             * clearSubscopes
-             *   Type: System.Boolean
-             *   If the securable object is a site, and the clearsubscopes parameter is true, the role assignments for all child securable objects in the current site and in the sites which inherit role assignments from the current site must be cleared and those securable objects will inherit role assignments from the current site after this call.
-             *   If the securable object is a site, and the clearsubscopes parameter is false, the role assignments for all child securable objects which do not inherit role assignments from their parent object must remain unchanged.
-             */
-            ctx.ExecuteQuery();
-
-            SitePermissionsSection config = (SitePermissionsSection)ConfigurationManager.GetSection(section);
-            foreach (PermissionBindingConfigElement item in config.Permissions)
+            foreach (ConfigurationSection sect in configfile.Sections)
             {
-                Group sitegroup = site.SiteGroups.GetByName(item.SiteGroup);
-                
-                RoleDefinition permission = site.RoleDefinitions.GetByName(item.Permission);
-                RoleDefinitionBindingCollection rdbs = new RoleDefinitionBindingCollection(ctx);
+                string name = sect.SectionInformation.Name;
+                char[] delim = { '.' };
+                string[] split = name.Split(delim);
+                if (split.Length > 4 && split[0].Equals("sp") && split[1].Equals("sitepermissions")
+                      && split[2].Equals(sitetype.ToString()) && split[3].Equals("doclib"))
+                {
+                    string doclib = split[4];
+                    SitePermissionsSection config = (SitePermissionsSection)ConfigurationManager.GetSection(name);
 
-                rdbs.Add(permission);
-                list.RoleAssignments.Add(sitegroup, rdbs);
+                    Web site = ctx.Web;
+                    List list = site.Lists.GetByTitle(doclib);
+                    list.BreakRoleInheritance(false, false);
+                    /* BreakRoleInheritance(copyRoleAssignments,clearSubscopes)
+                     * copyRoleAssignments
+                     *   Type: System.Boolean
+                     *   Specifies whether to copy the role assignments from the parent securable object.
+                     *   If the value is false, the collection of role assignments must contain only 1 role assignment containing the current user after the operation.
+                     * clearSubscopes
+                     *   Type: System.Boolean
+                     *   If the securable object is a site, and the clearsubscopes parameter is true, the role assignments for all child securable objects in the current site and in the sites which inherit role assignments from the current site must be cleared and those securable objects will inherit role assignments from the current site after this call.
+                     *   If the securable object is a site, and the clearsubscopes parameter is false, the role assignments for all child securable objects which do not inherit role assignments from their parent object must remain unchanged.
+                     */
+                    ctx.ExecuteQuery();
+                    foreach (PermissionBindingConfigElement item in config.Permissions)
+                    {
+                        Group sitegroup = site.SiteGroups.GetByName(item.SiteGroup);
+
+                        RoleDefinition permission = site.RoleDefinitions.GetByName(item.Permission);
+                        RoleDefinitionBindingCollection rdbs = new RoleDefinitionBindingCollection(ctx);
+
+                        rdbs.Add(permission);
+                        list.RoleAssignments.Add(sitegroup, rdbs);
+                    }
+                    ctx.ExecuteQuery();
+                }
             }
-            ctx.ExecuteQuery();
-
         }
             
 
@@ -586,14 +603,13 @@ namespace OGN.Sharepoint.Services
                 }
                 else
                 {
+                    //create the site
                     this.CreateSite(ctx, edu, _edutemplate);
                     report.Messages.Add("Site gemaakt.");                    
                     ClientContext ctx_edu = this.GetSite(edu.GetUrl());
-                    ChangePermissions(ctx_edu, _edudoclib_berichten, "sp.sitepermissions.edu.doclib.berichten");
-                    report.Messages.Add("Permissies Doc.Lib. voor berichten aangepast.");
-                    ClientContext ctx_edu2 = this.GetSite(edu.GetUrl());
-                    ChangePermissions(ctx_edu, _edudoclib_examendossier, "sp.sitepermissions.edu.doclib.examendossier");
-                    report.Messages.Add("Permissies Doc.Lib. voor examendossiers aangepast.");
+                    //change permissions on lists and doclibs as configured
+                    ChangePermissions(ctx_edu, SiteType.edu);
+                    report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
                     CreateLink(ctx, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
                     report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
                     if (!string.IsNullOrEmpty(edu.LOISite))
@@ -680,10 +696,8 @@ namespace OGN.Sharepoint.Services
                     this.CreateSite(ctx_mod, _modsub_title, _modsub_id, _modsubtemplate);
                     report.Messages.Add("Subsite gemaakt.");
                     //change permissions doc lib
-                    ChangePermissions(ctx_mod, _moddoclib_berichten, "sp.sitepermissions.mod.doclib.berichten");
-                    report.Messages.Add("Permissies Doc.Lib. voor berichten aangepast.");
-                    ChangePermissions(ctx_mod, _moddoclib_examendossier, "sp.sitepermissions.mod.doclib.examendossier");
-                    report.Messages.Add("Permissies Doc.Lib. voor examendossiers aangepast.");
+                    ChangePermissions(ctx_mod, SiteType.mod);
+                    report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
                     //create links from and to module site
                     if (!string.IsNullOrEmpty(mod.LOISite))
                     {
