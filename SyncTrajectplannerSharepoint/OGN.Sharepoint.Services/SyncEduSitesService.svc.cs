@@ -62,8 +62,8 @@ namespace OGN.Sharepoint.Services
                 : ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
             //the credentials of the application pool are used.
-            //_creds = CredentialCache.DefaultNetworkCredentials; 
-            _creds = new NetworkCredential("adm-gmichels", "hZpU=0(kXG=Bku", "ad"); //for testing
+            _creds = CredentialCache.DefaultNetworkCredentials; 
+            //_creds = new NetworkCredential("user", "pass", "ad"); //for testing
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
