@@ -62,7 +62,7 @@ namespace OGN.Sharepoint.Services
                 : ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
             //the credentials of the application pool are used.
-            _creds = CredentialCache.DefaultNetworkCredentials; 
+            _creds = CredentialCache.DefaultNetworkCredentials;
             //_creds = new NetworkCredential("user", "pass", "ad"); //for testing
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
@@ -204,12 +204,12 @@ namespace OGN.Sharepoint.Services
                 tracedump += "\n\t";
                 tracedump += item;
             }
-            EventLog.WriteEntry(_eventlogsource, msg+"\n\n"+tracedump, EventLogEntryType.Warning);
+            EventLog.WriteEntry(_eventlogsource, msg + "\n\n" + tracedump, EventLogEntryType.Warning);
             report.Messages.Add(msg);
             report.ResultType = OperationResultType.Warning;
-        } 
+        }
         #endregion
-        
+
         #region SharepointFunctions
         /// <summary>
         /// get context for SP Site
@@ -300,49 +300,81 @@ namespace OGN.Sharepoint.Services
             ctx.ExecuteQuery();
         }
 
-        private enum SiteType {edu,mod};
+        private enum SiteType { edu, mod };
+
+        /// <summary>
+        /// Changes permission for sites, lists or doclibraries
+        /// </summary>
+        /// <param name="ctx">Web Context</param>
+        /// <param name="sitetype">MOD or EDU</param>
         private void ChangePermissions(ClientContext ctx, SiteType sitetype)
         {
             foreach (ConfigurationSection sect in configfile.Sections)
             {
                 string name = sect.SectionInformation.Name;
-                char[] delim = { '.' };
-                string[] split = name.Split(delim);
-                if (split.Length > 4 && split[0].Equals("sp") && split[1].Equals("sitepermissions")
-                      && split[2].Equals(sitetype.ToString()) && split[3].Equals("doclib"))
+                if (name.ToLower().StartsWith("sp.sitepermissions."))
                 {
-                    string doclib = split[4];
-                    SitePermissionsSection config = (SitePermissionsSection)ConfigurationManager.GetSection(name);
+                    char[] delim = { '.' };
+                    string[] split = name.Split(delim);
 
-                    Web site = ctx.Web;
-                    List list = site.Lists.GetByTitle(doclib);
-                    list.BreakRoleInheritance(false, false);
-                    /* BreakRoleInheritance(copyRoleAssignments,clearSubscopes)
-                     * copyRoleAssignments
-                     *   Type: System.Boolean
-                     *   Specifies whether to copy the role assignments from the parent securable object.
-                     *   If the value is false, the collection of role assignments must contain only 1 role assignment containing the current user after the operation.
-                     * clearSubscopes
-                     *   Type: System.Boolean
-                     *   If the securable object is a site, and the clearsubscopes parameter is true, the role assignments for all child securable objects in the current site and in the sites which inherit role assignments from the current site must be cleared and those securable objects will inherit role assignments from the current site after this call.
-                     *   If the securable object is a site, and the clearsubscopes parameter is false, the role assignments for all child securable objects which do not inherit role assignments from their parent object must remain unchanged.
-                     */
-                    ctx.ExecuteQuery();
-                    foreach (PermissionBindingConfigElement item in config.Permissions)
+                    string compareSiteType = split[2].ToLower();
+                    if (compareSiteType == sitetype.ToString().ToLower())
                     {
-                        Group sitegroup = site.SiteGroups.GetByName(item.SiteGroup);
+                        string configType = split[3].ToLower();
+                        SitePermissionsSection config = (SitePermissionsSection)ConfigurationManager.GetSection(name);
 
-                        RoleDefinition permission = site.RoleDefinitions.GetByName(item.Permission);
-                        RoleDefinitionBindingCollection rdbs = new RoleDefinitionBindingCollection(ctx);
+                        switch (configType)
+                        {
+                            case "deactivate":
+                                {
+                                    break; // No change needed. This is handled in other ChangePermissions function
+                                }
+                            case "doclib":
+                                {
+                                    string doclib = split[4];
+                                    Web site = ctx.Web;
+                                    List list = site.Lists.GetByTitle(doclib);
+                                    list.BreakRoleInheritance(false, false);
 
-                        rdbs.Add(permission);
-                        list.RoleAssignments.Add(sitegroup, rdbs);
-                    }
-                    ctx.ExecuteQuery();
-                }
-            }
-        }
-            
+                                    ctx.ExecuteQuery();
+                                    foreach (PermissionBindingConfigElement item in config.Permissions)
+                                    {
+                                        Group sitegroup = site.SiteGroups.GetByName(item.SiteGroup);
+
+                                        RoleDefinition permission = site.RoleDefinitions.GetByName(item.Permission);
+                                        RoleDefinitionBindingCollection rdbs = new RoleDefinitionBindingCollection(ctx);
+
+                                        rdbs.Add(permission);
+                                        list.RoleAssignments.Add(sitegroup, rdbs);
+                                    }
+                                    ctx.ExecuteQuery();
+                                    break;
+                                }
+                            case "site":
+                                {
+                                    string siteName = split[4].ToLower();
+                                    Web site = ctx.Web.Webs.First(w => w.Title.ToLower() == siteName);
+                                    site.BreakRoleInheritance(false, false);
+                                    ctx.ExecuteQuery();
+                                    foreach (PermissionBindingConfigElement item in config.Permissions)
+                                    {
+                                        Group sitegroup = site.SiteGroups.GetByName(item.SiteGroup);
+
+                                        RoleDefinition permission = site.RoleDefinitions.GetByName(item.Permission);
+                                        RoleDefinitionBindingCollection rdbs = new RoleDefinitionBindingCollection(ctx);
+
+                                        rdbs.Add(permission);
+                                        site.RoleAssignments.Add(sitegroup, rdbs);
+                                    }
+                                    ctx.ExecuteQuery();
+                                    break;
+                                }
+                        } // end switch
+                    } // end check site type
+                }  // end check config section check
+            } // end for config
+        } // end f
+
 
         /// <summary>
         /// returns true if site for eduprogramme or module exists
@@ -357,7 +389,7 @@ namespace OGN.Sharepoint.Services
             ctx.Load(site.Webs, sites => sites.Include(subsite => subsite.Url));
             ctx.ExecuteQuery();
 
-            return 0<site.Webs.Count(subsite => subsite.Url.EndsWith("/" + edumod.GetSiteName()));
+            return 0 < site.Webs.Count(subsite => subsite.Url.EndsWith("/" + edumod.GetSiteName()));
         }
 
         /// <summary>
@@ -381,7 +413,7 @@ namespace OGN.Sharepoint.Services
         private void ChangePermissions(ClientContext ctx, bool isEdu)
         {
             Web site = ctx.Web;
-            site.BreakRoleInheritance(false,false);
+            site.BreakRoleInheritance(false, false);
             /* BreakRoleInheritance(copyRoleAssignments,clearSubscopes)
              * copyRoleAssignments
              *   Type: System.Boolean
@@ -427,19 +459,19 @@ namespace OGN.Sharepoint.Services
         {
             Web site = ctx.Web;
             List list = site.Lists.GetByTitle(listtitle);
-            
+
             ListItemCreationInformation itemInfo = new ListItemCreationInformation();
             ListItem item = list.AddItem(itemInfo);
             FieldUrlValue url = new FieldUrlValue();
             url.Url = linktourl; //linkto.GetUrl(_home_url);
             url.Description = linktodescr; //linkto.GetTitle();
-            item["URL"] =  url;
+            item["URL"] = url;
             if (!string.IsNullOrEmpty(column))
             {
                 item[column] = value;
             }
-            
-            item.Update(); 
+
+            item.Update();
             ctx.ExecuteQuery();
         }
         private void CreateLink(ClientContext ctx, string listtitle, string linktourl, string linktodescr)
@@ -507,7 +539,7 @@ namespace OGN.Sharepoint.Services
         /// <param name="linkto">the eduprogramme or module to which the link targets</param>
         private void UpdateLink(ClientContext ctx, string listtitle, IEduModSite linkto)
         {
-            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.GetUrl(), string.Empty,string.Empty);
+            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.GetUrl(), string.Empty, string.Empty);
         }
         private void UpdateLink(ClientContext ctx, string listtitle, string linktitle, string linkurl, string column, string val)
         {
@@ -556,13 +588,13 @@ namespace OGN.Sharepoint.Services
 
             foreach (ListItem item in items)
             {
-                FieldUrlValue url = (FieldUrlValue) item["URL"];
-                if (url.Url.Equals(linktourl)) 
+                FieldUrlValue url = (FieldUrlValue)item["URL"];
+                if (url.Url.Equals(linktourl))
                 {
                     item.DeleteObject();
                     break;
                 }
-            } 
+            }
             ctx.ExecuteQuery();
         }
 
@@ -610,9 +642,9 @@ namespace OGN.Sharepoint.Services
                 {
                     //create the site
                     this.CreateSite(ctx, edu, _edutemplate);
-                    report.Messages.Add("Site gemaakt.");                    
+                    report.Messages.Add("Site gemaakt.");
                     ClientContext ctx_edu = this.GetSite(edu.GetUrl());
-                    //change permissions on lists and doclibs as configured
+                    //change permissions on lists, sites and doclibs as configured
                     ChangePermissions(ctx_edu, SiteType.edu);
                     report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
                     CreateLink(ctx, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
@@ -624,7 +656,7 @@ namespace OGN.Sharepoint.Services
                         if (this.SiteExists(ctx, loisite))
                         {
                             ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2mod_list_column,_link2mod_list_value, report);
+                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2mod_list_column, _link2mod_list_value, report);
                             report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
                             CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), _link2mod_list_column, _link2mod_list_value, report);
                             report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
@@ -636,7 +668,7 @@ namespace OGN.Sharepoint.Services
                     }
                     this.AddTerm(ctx, _edu_id, edu);
                     report.Messages.Add("Term gemaakt.");
-                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '"+edu.GetTitle()+"'", edu.GetUrl());
+                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '" + edu.GetTitle() + "'", edu.GetUrl());
                 }
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(edu):\n" + e.Message, report); }
@@ -660,7 +692,7 @@ namespace OGN.Sharepoint.Services
                 report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
                 this.AddTerm(ctx, _edu_id, edu);
                 report.Messages.Add("Term gemaakt.");
-                
+
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Update(edu):\n" + e.Message, report); }
             return report;
@@ -703,7 +735,7 @@ namespace OGN.Sharepoint.Services
                     ClientContext ctx_mod = this.GetSite(mod.GetUrl());
                     this.CreateSite(ctx_mod, _modsub_title, _modsub_id, _modsubtemplate);
                     report.Messages.Add("Subsite gemaakt.");
-                    //change permissions doc lib
+                    //change permissions on lists, sites and doclibs as configured
                     ChangePermissions(ctx_mod, SiteType.mod);
                     report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
                     //create links from and to module site
@@ -813,7 +845,7 @@ namespace OGN.Sharepoint.Services
                 report.ResultType = report1.ResultType;
                 OperationReport report2 = this.Delete(change.From);
                 foreach (string msg in report2.Messages) { report.Messages.Add(msg); }
-                report.ResultType = (report2.ResultType==OperationResultType.Warning) ? report2.ResultType : report.ResultType;
+                report.ResultType = (report2.ResultType == OperationResultType.Warning) ? report2.ResultType : report.ResultType;
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Update(link):\n" + e.Message, report); }
             return report;
@@ -860,7 +892,7 @@ namespace OGN.Sharepoint.Services
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie TestException():\n" + e.Message, report); }
             return report;
-        } 
+        }
         #endregion
 
 
@@ -923,7 +955,7 @@ namespace OGN.Sharepoint.Services
                     }
                     else
                     {
-                        report.Messages.Add("Actie bepaald: De naam van de module moet gewijzigd worden van '"+oldname+"' naar '"+newname+"'.");
+                        report.Messages.Add("Actie bepaald: De naam van de module moet gewijzigd worden van '" + oldname + "' naar '" + newname + "'.");
                         OperationReport report1 = this.Update(mod);
                         foreach (string msg in report1.Messages) { report.Messages.Add(msg); }
                         report.ResultType = report1.ResultType;
