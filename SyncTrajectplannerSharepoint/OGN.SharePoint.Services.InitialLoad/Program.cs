@@ -39,7 +39,7 @@ namespace OGN.SharePoint.Services.InitialLoad
                 using (StreamWriter log = new StreamWriter(logfile))
                 {
                     Console.WriteLine("Opleidingen...");
-                    string[] opl = File.ReadAllLines("Opleidingen.csv");
+                    string[] opl = File.ReadAllLines("Opleidingen.csv",Encoding.Default);
                     for (int i = 1; i < opl.Length; i++)
                     {
                         log.WriteLine("Opleiding;" + opl[i]);
@@ -59,7 +59,7 @@ namespace OGN.SharePoint.Services.InitialLoad
                         }
                     }
                     Console.WriteLine("Modules...");
-                    string[] mods = File.ReadAllLines("Modules.csv");
+                    string[] mods = File.ReadAllLines("Modules.csv",Encoding.Default);
                     for (int i = 1; i < mods.Length; i++)
                     {
                         log.WriteLine("Module;" + mods[i]);
@@ -79,7 +79,7 @@ namespace OGN.SharePoint.Services.InitialLoad
                         }
                     }
                     Console.WriteLine("Relaties...");
-                    string[] rels = File.ReadAllLines("Relaties.csv");
+                    string[] rels = File.ReadAllLines("Relaties.csv", Encoding.Default);
                     for (int i = 1; i < rels.Length; i++)
                     {
                         log.WriteLine("Relatie;" + rels[i]);
