@@ -668,9 +668,10 @@ namespace OGN.Sharepoint.Services
                         if (this.SiteExists(ctx, loisite))
                         {
                             ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2mod_list_column, loisite.EduType + " " + _link2mod_list_value, report);
+                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2edu_list_column, "LOI " + _link2edu_list_value, report);
                             report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
-                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), _link2mod_list_column, edu.EduType + " " + _link2mod_list_value, report);
+
+                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), _link2edu_list_column, edu.EduType + " " + _link2edu_list_value, report);
                             report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
                         }
                         else
@@ -758,9 +759,10 @@ namespace OGN.Sharepoint.Services
                         if (this.SiteExists(ctx, loisite))
                         {
                             ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                            CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2edu_list_column, loisite.EduType + " " + _link2edu_list_value, report);
+                            CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2mod_list_column, "LOI " + _link2mod_list_value, report);
                             report.Messages.Add("Link naar LOI modulesite gemaakt.");
-                            CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), _link2edu_list_column, mod.EduType + " " + _link2edu_list_value, report);
+
+                            CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), _link2mod_list_column, mod.EduType + " " + _link2mod_list_value, report);
                             report.Messages.Add("Link vanuit LOI modulesite gemaakt.");
                         }
                         else
