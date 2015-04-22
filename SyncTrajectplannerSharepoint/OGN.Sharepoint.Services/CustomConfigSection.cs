@@ -30,6 +30,15 @@ namespace OGN.Sharepoint.Services
             }
         }
 
+        [ConfigurationProperty("type", IsDefaultCollection = false)]
+        public string PermissionType
+        {
+            get
+            {
+                return (string)base["type"];
+            }
+        }
+
     }
 
     public class SitePermissions : ConfigurationElementCollection

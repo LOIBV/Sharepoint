@@ -13,10 +13,10 @@ namespace OGN.SharePoint.Services.InitialLoad
     {
         static void Main(string[] args)
         {
-            if (args.Length==0)
+            if (args.Length == 0)
             {
                 Program.Create();
-            } 
+            }
             else
             {
                 if (args[0].Equals("ALLESWEG")) { Program.AllesWeg(args[1]); }
@@ -33,13 +33,13 @@ namespace OGN.SharePoint.Services.InitialLoad
             SyncEduSitesService svc = new SyncEduSitesService(false);
             char[] delim = { ';' };
 
-            File.WriteAllText("log.csv","");
+            File.WriteAllText("log.csv", "");
             using (FileStream logfile = File.OpenWrite("log.csv"))
             {
                 using (StreamWriter log = new StreamWriter(logfile))
                 {
                     Console.WriteLine("Opleidingen...");
-                    string[] opl = File.ReadAllLines("Opleidingen.csv",Encoding.Default);
+                    string[] opl = File.ReadAllLines("Opleidingen.csv", Encoding.Default);
                     for (int i = 1; i < opl.Length; i++)
                     {
                         log.WriteLine("Opleiding;" + opl[i]);
@@ -52,7 +52,12 @@ namespace OGN.SharePoint.Services.InitialLoad
                         edu.EduType = val[4];
                         try
                         {
+                            Console.WriteLine("{3} out of {4}: Creating opleidingssite: {0}, type: {1}, code: {2}", edu.Name, edu.EduType, edu.Id, i.ToString(), opl.Length.ToString());
+                            DateTime startTime = DateTime.Now;
                             svc.Create(edu);
+                            DateTime endTime = DateTime.Now;
+                            TimeSpan diff = endTime.Subtract(startTime);
+                            Console.WriteLine("Opleiding Site creation took: {0} seconds", diff.TotalSeconds.ToString());
                         }
                         catch (Exception e)
                         {
@@ -60,7 +65,7 @@ namespace OGN.SharePoint.Services.InitialLoad
                         }
                     }
                     Console.WriteLine("Modules...");
-                    string[] mods = File.ReadAllLines("Modules.csv",Encoding.Default);
+                    string[] mods = File.ReadAllLines("Modules.csv", Encoding.Default);
                     for (int i = 1; i < mods.Length; i++)
                     {
                         log.WriteLine("Module;" + mods[i]);
@@ -73,7 +78,13 @@ namespace OGN.SharePoint.Services.InitialLoad
                         mod.EduType = val[4];
                         try
                         {
+                            DateTime startTime = DateTime.Now;
+                            Console.WriteLine("{2} out of {3}: Creating modulesite: {0}, type: {1}, code: {2}", mod.Name, mod.EduType, mod.Id, i.ToString(), mods.Length.ToString());
                             svc.Create(mod);
+                            DateTime endTime = DateTime.Now;
+                            TimeSpan diff = endTime.Subtract(startTime);
+                            Console.WriteLine("Module Site creation took: {0} seconds", diff.TotalSeconds.ToString());
+
                         }
                         catch (Exception e)
                         {
@@ -91,7 +102,12 @@ namespace OGN.SharePoint.Services.InitialLoad
                         rel.Module = new ModuleRef(val[1]);
                         try
                         {
+                            Console.WriteLine("{2} out of {3}: Creating relation Opleiding: {0}, Module: {1}", rel.EduProgramme.Id, rel.Module.Id, i.ToString(), rels.Length.ToString());
+                            DateTime startTime = DateTime.Now;
                             svc.Create(rel);
+                            DateTime endTime = DateTime.Now;
+                            TimeSpan diff = endTime.Subtract(startTime);
+                            Console.WriteLine("Relation creation took: {0} seconds", diff.TotalSeconds.ToString());
                         }
                         catch (Exception e)
                         {

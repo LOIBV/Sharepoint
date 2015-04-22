@@ -24,6 +24,10 @@ namespace OGN.Sharepoint.Services
         private string _edu_siteslist_column;
         private string _edu_siteslist_school_column;
 
+        private string _mod_siteslist;
+        private string _mod_siteslist_column;
+        private string _mod_siteslist_school_column;
+
         private NetworkCredential _creds;
         private Guid _loi_id;
         private Guid _cat_id;
@@ -46,7 +50,7 @@ namespace OGN.Sharepoint.Services
         private string _link2mod_list_column;
         private string _link2mod_list_value;
 
-        
+
 
         System.Net.Mail.SmtpClient _mailer;
         private string _mailfrom;
@@ -71,9 +75,15 @@ namespace OGN.Sharepoint.Services
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
+
             _edu_siteslist = ConfigurationManager.AppSettings["sp.sitecollection:edu:list2sites"];
             _edu_siteslist_column = ConfigurationManager.AppSettings["sp.sitecollection:edu:list2sites:column"];
             _edu_siteslist_school_column = ConfigurationManager.AppSettings["sp.sitecollection:edu:list2sites:schoolcolumn"];
+
+            _mod_siteslist = ConfigurationManager.AppSettings["sp.sitecollection:mod:list2sites"];
+            _mod_siteslist_column = ConfigurationManager.AppSettings["sp.sitecollection:mod:list2sites:column"];
+            _mod_siteslist_school_column = ConfigurationManager.AppSettings["sp.sitecollection:mod:list2sites:schoolcolumn"];
+
             _lcid = Int32.Parse(ConfigurationManager.AppSettings["sp.site:lcid"]);
             _loi_id = new Guid(ConfigurationManager.AppSettings["sp.termstore:id"]);
             _cat_id = new Guid(ConfigurationManager.AppSettings["sp.termstore.termset:id"]);
@@ -336,7 +346,8 @@ namespace OGN.Sharepoint.Services
                                 }
                             case "doclib":
                                 {
-                                    string doclib = split[4];
+                                    string doclib = string.Empty;
+                                    doclib = split[4];
                                     Web site = ctx.Web;
                                     List list = site.Lists.GetByTitle(doclib);
                                     list.BreakRoleInheritance(false, false);
@@ -357,8 +368,19 @@ namespace OGN.Sharepoint.Services
                                 }
                             case "site":
                                 {
-                                    string siteName = split[4].ToLower();
-                                    Web site = ctx.Web.Webs.First(w => w.Title.ToLower() == siteName);
+                                    string siteName = string.Empty;
+                                    siteName = split[4].ToLower();
+                                    Web site = null;
+                                    if (config.PermissionType.ToLower() == "dynamic")
+                                    {
+                                        site = ctx.Web.Webs.First(w => w.Title.ToLower().Contains(siteName));
+                                    }
+                                    else
+                                    {
+                                        site = ctx.Web.Webs.First(w => w.Title.ToLower() == siteName);
+
+                                    }
+                                 
                                     site.BreakRoleInheritance(false, false);
                                     ctx.ExecuteQuery();
                                     foreach (PermissionBindingConfigElement item in config.Permissions)
@@ -486,7 +508,7 @@ namespace OGN.Sharepoint.Services
         }
         private void CreateLink(ClientContext ctx, string listtitle, string linktourl, string linktodescr)
         {
-            CreateLink(ctx, listtitle, linktourl, linktodescr, string.Empty, string.Empty, string.Empty,string.Empty);
+            CreateLink(ctx, listtitle, linktourl, linktodescr, string.Empty, string.Empty, string.Empty, string.Empty);
         }
 
 
@@ -616,7 +638,7 @@ namespace OGN.Sharepoint.Services
             }
             else
             {
-                this.CreateLink(site, name_link_list, link, link_descr, column, value, string.Empty,string.Empty);
+                this.CreateLink(site, name_link_list, link, link_descr, column, value, string.Empty, string.Empty);
                 report.Messages.Add("Link gemaakt.");
             }
         }
@@ -654,13 +676,15 @@ namespace OGN.Sharepoint.Services
                     this.CreateSite(ctx, edu, _edutemplate);
                     report.Messages.Add("Site gemaakt.");
                     ClientContext ctx_edu = this.GetSite(edu.GetUrl());
-                    
+
                     //change permissions on lists, sites and doclibs as configured
                     ChangePermissions(ctx_edu, SiteType.edu);
                     report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
-                    
-                    CreateLink(ctx, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle(),_edu_siteslist_school_column,edu.EduType);
+
+                    // Opleidingsmatrix
+                    CreateLink(ctx, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle(), _edu_siteslist_school_column, edu.EduType);
                     report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
+
                     if (!string.IsNullOrEmpty(edu.LOISite))
                     {
                         report.Messages.Add("Maak link van en naar LOI opleidingssite.");
@@ -744,13 +768,22 @@ namespace OGN.Sharepoint.Services
                     //create module site
                     this.CreateSite(ctx, mod, _modtemplate);
                     report.Messages.Add("Site gemaakt.");
-                    //create subsite
+
+                    //create subsite, add module name to subsite
                     ClientContext ctx_mod = this.GetSite(mod.GetUrl());
+                    _modsub_title += " " + mod.GetTitle();
                     this.CreateSite(ctx_mod, _modsub_title, _modsub_id, _modsubtemplate);
                     report.Messages.Add("Subsite gemaakt.");
+
+
                     //change permissions on lists, sites and doclibs as configured
                     ChangePermissions(ctx_mod, SiteType.mod);
                     report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
+
+                    // Modulematrix
+                    CreateLink(ctx, _mod_siteslist, mod.GetUrl(), mod.GetUrl(), _mod_siteslist_column, mod.GetTitle(), _mod_siteslist_school_column, mod.EduType);
+                    report.Messages.Add("Link vanaf sitecollectie naar modulesite gemaakt.");
+
                     //create links from and to module site
                     if (!string.IsNullOrEmpty(mod.LOISite))
                     {
@@ -831,7 +864,7 @@ namespace OGN.Sharepoint.Services
                 }
                 else
                 {
-                    this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(), this.GetTitle(ctx_mod),_link2mod_list_column,_link2mod_list_value,string.Empty,string.Empty);
+                    this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(), this.GetTitle(ctx_mod), _link2mod_list_column, _link2mod_list_value, string.Empty, string.Empty);
                     report.Messages.Add("Link naar modulesite gemaakt.");
                 }
                 if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl()))
@@ -840,7 +873,7 @@ namespace OGN.Sharepoint.Services
                 }
                 else
                 {
-                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(), this.GetTitle(ctx_edu),_link2edu_list_column,_link2edu_list_value, string.Empty,string.Empty);
+                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(), this.GetTitle(ctx_edu), _link2edu_list_column, _link2edu_list_value, string.Empty, string.Empty);
                     report.Messages.Add("Link naar opleidingssite gemaakt.");
                 }
             }
