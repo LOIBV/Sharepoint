@@ -219,7 +219,14 @@ namespace OGN.Sharepoint.Services
                 tracedump += "\n\t";
                 tracedump += item;
             }
-            EventLog.WriteEntry(_eventlogsource, msg + "\n\n" + tracedump, EventLogEntryType.Warning);
+            try
+            {
+                EventLog.WriteEntry(_eventlogsource, msg + "\n\n" + tracedump, EventLogEntryType.Warning);
+            }
+            catch (Exception ex)
+            {
+                // No catch
+            }
             report.Messages.Add(msg);
             report.ResultType = OperationResultType.Warning;
         }
@@ -417,6 +424,31 @@ namespace OGN.Sharepoint.Services
             ctx.ExecuteQuery();
 
             return 0 < site.Webs.Count(subsite => subsite.Url.EndsWith("/" + edumod.GetSiteName()));
+        }
+
+        /// <summary>
+        /// returns true if site for subsite 
+        /// </summary>
+        /// <param name="ctx">SP context</param>
+        /// <param name="edumod">eduprogramme or module</param>
+        /// <returns></returns>
+        private bool SiteExists(ClientContext ctx, string subSite)
+        {
+            Web site = ctx.Web;
+
+            ctx.Load(site.Webs);
+            ctx.ExecuteQuery();
+
+            int count = site.Webs.Count(subsite => subsite.Url.EndsWith("/" + subSite.ToLower())); 
+            
+            if (count > 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -762,6 +794,23 @@ namespace OGN.Sharepoint.Services
                 if (this.SiteExists(ctx, mod))
                 {
                     this.LogWarning("Site niet gemaakt. Module bestaat al.", report);
+                    //create subsite, add module name to subsite
+                    ClientContext ctx_mod = this.GetSite(mod.GetUrl());
+                    if (this.SiteExists(ctx_mod, _modsub_title))
+                    {
+                        this.LogWarning("SubSite niet gemaakt. Site bestaat al.", report);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Subsite bestond nog niet");
+                        string modTitle = _modsub_title + " " + mod.GetTitle();
+                        this.CreateSite(ctx_mod, modTitle, _modsub_id, _modsubtemplate);
+                        report.Messages.Add("Subsite gemaakt.");
+
+                        //change permissions on lists, sites and doclibs as configured
+                        ChangePermissions(ctx_mod, SiteType.mod);
+                        report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
+                    }
                 }
                 else
                 {
@@ -771,8 +820,8 @@ namespace OGN.Sharepoint.Services
 
                     //create subsite, add module name to subsite
                     ClientContext ctx_mod = this.GetSite(mod.GetUrl());
-                    _modsub_title += " " + mod.GetTitle();
-                    this.CreateSite(ctx_mod, _modsub_title, _modsub_id, _modsubtemplate);
+                    string modTitle = _modsub_title + " " + mod.GetTitle();
+                    this.CreateSite(ctx_mod, modTitle, _modsub_id, _modsubtemplate);
                     report.Messages.Add("Subsite gemaakt.");
 
 
