@@ -562,7 +562,15 @@ namespace OGN.Sharepoint.Services
             ctx.Load(items);
             ctx.ExecuteQuery();
 
-            return 0 < items.Count(item => ((FieldUrlValue)item["URL"]).Url.Equals(linktourl));
+            int itemCount = items.Count(item => ((FieldUrlValue)item["URL"]).Url.Equals(linktourl));
+            if (itemCount < 0)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         /// <summary>
@@ -909,6 +917,7 @@ namespace OGN.Sharepoint.Services
 
                 if (this.LinkExists(ctx_edu, _link2mod_list, link.Module.GetUrl()))
                 {
+                    Console.WriteLine("Link naar modulesite niet gemaakt. Link bestaat al.");
                     this.LogWarning("Link naar modulesite niet gemaakt. Link bestaat al.", report);
                 }
                 else
@@ -918,6 +927,7 @@ namespace OGN.Sharepoint.Services
                 }
                 if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl()))
                 {
+                    Console.WriteLine("Link naar opleidingssite niet gemaakt. Link bestaat al.");
                     this.LogWarning("Link naar opleidingssite niet gemaakt. Link bestaat al.", report);
                 }
                 else
@@ -926,7 +936,11 @@ namespace OGN.Sharepoint.Services
                     report.Messages.Add("Link naar opleidingssite gemaakt.");
                 }
             }
-            catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(link):\n" + e.Message, report); }
+            catch (Exception e) 
+            {
+                Console.WriteLine("Error: {0}", e.Message);
+                this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(link):\n" + e.Message, report);
+            }
             return report;
         }
 
