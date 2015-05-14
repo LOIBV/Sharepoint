@@ -387,7 +387,7 @@ namespace OGN.Sharepoint.Services
                                         site = ctx.Web.Webs.First(w => w.Title.ToLower() == siteName);
 
                                     }
-                                 
+
                                     site.BreakRoleInheritance(false, false);
                                     ctx.ExecuteQuery();
                                     foreach (PermissionBindingConfigElement item in config.Permissions)
@@ -439,8 +439,8 @@ namespace OGN.Sharepoint.Services
             ctx.Load(site.Webs);
             ctx.ExecuteQuery();
 
-            int count = site.Webs.Count(subsite => subsite.Url.EndsWith("/" + subSite.ToLower())); 
-            
+            int count = site.Webs.Count(subsite => subsite.Url.EndsWith("/" + subSite.ToLower()));
+
             if (count > 0)
             {
                 return true;
@@ -936,7 +936,7 @@ namespace OGN.Sharepoint.Services
                     report.Messages.Add("Link naar opleidingssite gemaakt.");
                 }
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 Console.WriteLine("Error: {0}", e.Message);
                 this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(link):\n" + e.Message, report);
@@ -1082,5 +1082,38 @@ namespace OGN.Sharepoint.Services
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie DoUndeterminedAction(mod):\n" + e.Message, report); }
             return report;
         }
-    }
-}
+
+        public void FixSiteNames()
+        {
+            ClientContext ctx = new ClientContext("https://teamwise.ogn.eu/module");
+            ctx.Credentials = _creds;
+            ctx.Load(ctx.Web);
+            ctx.ExecuteQuery();
+
+            ctx.Load(ctx.Web.Webs, sites => sites.Include(subsite => subsite.Title));
+           //var site = ctx.Web.Webs.First(s => s.Title.Contains(';'));
+          
+            
+            ctx.ExecuteQuery();
+
+            foreach(Web web in ctx.Web.Webs)
+            {
+                Console.WriteLine(web.Title);
+                ctx.Load(web.Webs, w => w.Include(ont => ont.Title));
+                ctx.ExecuteQuery();
+
+                Web subWeb = web.Webs[0];
+                if (subWeb.Title.Contains(';') | (subWeb.Title.Contains('"')))
+                {
+                    Console.WriteLine(subWeb.Title);
+                    subWeb.Title = subWeb.Title.Replace("\"", "").Replace(";", "").Trim();
+                    Console.WriteLine(subWeb.Title);
+                    subWeb.Update();
+                    ctx.ExecuteQuery();
+                }
+
+            }
+        }
+
+    } // end c
+} // end ns

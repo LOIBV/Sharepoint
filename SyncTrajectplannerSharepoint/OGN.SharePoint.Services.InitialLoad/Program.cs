@@ -17,6 +17,11 @@ namespace OGN.SharePoint.Services.InitialLoad
 
         static void Main(string[] args)
         {
+            //SyncEduSitesService svc = new SyncEduSitesService(false);
+            //svc.FixSiteNames();
+            
+
+
             if (args.Length == 0)
             {
                 DoEdu = true;
