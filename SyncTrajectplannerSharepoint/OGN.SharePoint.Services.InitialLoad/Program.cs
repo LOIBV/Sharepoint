@@ -17,9 +17,37 @@ namespace OGN.SharePoint.Services.InitialLoad
 
         static void Main(string[] args)
         {
-            //SyncEduSitesService svc = new SyncEduSitesService(false);
+            SyncEduSitesService svc = new SyncEduSitesService(false);
             //svc.FixSiteNames();
+            EduProgramme edu = new EduProgramme();
+            edu.Code = "1572.100";
+            edu.Name = "Test Name5";
+            edu.Id = "vio1";
+            edu.EduType = "TEST";
+
+            EduProgrammeVal eduVal = new EduProgrammeVal();
+            eduVal.Code = edu.Code;
+            eduVal.Id = edu.Id;
+            eduVal.Name = edu.Name;
+            eduVal.EduType = edu.EduType;
+
+            //svc.DoUndeterminedAction(eduVal);
+
+            Module mod = new Module();
+            mod.Code = "99999";
+            mod.Id = "op1";
+            mod.Name = "Test Module LOI4";
+            mod.EduCode = "1572.100";
             
+
+            ModuleVal modVal = new ModuleVal();
+            modVal.Code = mod.Code;
+            modVal.Id = mod.Id;
+            modVal.Name = mod.Name;
+            modVal.EduCode = mod.EduCode;
+            modVal.LinkedModule = mod.LinkedModule;
+
+            svc.DoUndeterminedAction(modVal);
 
 
             if (args.Length == 0)
@@ -80,7 +108,7 @@ namespace OGN.SharePoint.Services.InitialLoad
                             edu.Id = val[0];
                             edu.Code = val[1];
                             edu.Name = val[2];
-                            edu.LOISite = val[3];
+                            edu.EduWorkSpace = val[3];
                             edu.EduType = val[4];
                             try
                             {
@@ -111,12 +139,12 @@ namespace OGN.SharePoint.Services.InitialLoad
                             mod.Id = val[0];
                             mod.Code = val[1];
                             mod.Name = val[2];
-                            mod.LOISite = val[3];
-                            mod.EduType = val[4];
+                            mod.EduCode = val[3];
+                            mod.LinkedModule = val[4];
                             try
                             {
                                 DateTime startTime = DateTime.Now;
-                                Console.WriteLine("{3} out of {4}: Creating modulesite: {0}, type: {1}, code: {2}", mod.Name, mod.EduType, mod.Id, i.ToString(), mods.Length.ToString());
+                                Console.WriteLine("{3} out of {4}: Creating modulesite: {0}, code: {1}", mod.Name,  mod.Id, i.ToString(), mods.Length.ToString());
                                 svc.Create(mod);
                                 DateTime endTime = DateTime.Now;
                                 TimeSpan diff = endTime.Subtract(startTime);
