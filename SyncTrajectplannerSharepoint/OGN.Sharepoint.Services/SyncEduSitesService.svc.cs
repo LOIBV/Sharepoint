@@ -200,22 +200,11 @@ namespace OGN.Sharepoint.Services
                 tracedump += "\n\t";
                 tracedump += item;
             }
-#if !debug
-            try
-            {
-#endif
-                EventLog.WriteEntry(_eventlogsource, msg, EventLogEntryType.Error);
-                EventLog.WriteEntry(_eventlogsource, tracedump, EventLogEntryType.Error);
-                EventLog.WriteEntry(_eventlogsource, e.Message, EventLogEntryType.Error);
-                this.SendNotification2Admin("OGN.SharePoint.Services: exceptie", msg + "\n" + tracedump + "\n" + e.Message);
-                throw new FaultException<string>(msg, "Exception");
-#if !debug
-            }
-            catch (Exception ex)
-            {
-
-            }
-#endif
+            EventLog.WriteEntry(_eventlogsource, msg, EventLogEntryType.Error);
+            EventLog.WriteEntry(_eventlogsource, tracedump, EventLogEntryType.Error);
+            EventLog.WriteEntry(_eventlogsource, e.Message, EventLogEntryType.Error);
+            this.SendNotification2Admin("OGN.SharePoint.Services: exceptie", msg + "\n" + tracedump + "\n" + e.Message);
+            //throw new FaultException<string>(msg, "Exception");
 
         }
         /// <summary>
@@ -292,14 +281,20 @@ namespace OGN.Sharepoint.Services
         {
             TaxonomySession tses = TaxonomySession.GetTaxonomySession(ctx);
             TermStore terms = tses.GetDefaultSiteCollectionTermStore();
-
             TermGroup loi_group = terms.GetGroup(_loi_id);
-
             TermSet cat_set = terms.GetTermSet(_cat_id);
             Term edumod_set = cat_set.GetTerm(edumod_id);
 
-            Term term = edumod_set.CreateTerm(edumod.GetTitle(), 1033, Guid.NewGuid());
-            ctx.ExecuteQuery();
+            // Check if term exists
+            try
+            {
+                Term term = edumod_set.CreateTerm(edumod.GetTitle(), 1033, Guid.NewGuid());
+                ctx.ExecuteQuery();
+            }
+            catch (Exception ex)
+            {
+                // Term exists.
+            }
         }
 
         /// <summary>
@@ -323,6 +318,7 @@ namespace OGN.Sharepoint.Services
         private void CreateSite(ClientContext ctx, string title, string url, string template)
         {
             Web site = ctx.Web;
+
 
             WebCreationInformation newsite = new WebCreationInformation();
             newsite.WebTemplate = template;
@@ -633,7 +629,7 @@ namespace OGN.Sharepoint.Services
             ListItemCollection items = list.GetItems(qry);
             ctx.Load(items);
             ctx.ExecuteQuery();
-
+            bool isFound = false;
             foreach (ListItem item in items)
             {
                 FieldUrlValue sitelinkstome = (FieldUrlValue)item["URL"];
@@ -642,6 +638,7 @@ namespace OGN.Sharepoint.Services
                 //listtitle is one name, listtitle2 must be the other
                 string listtitle2 = (listtitle.Equals(_link2edu_list)) ? _link2mod_list : _link2edu_list;
                 this.UpdateLink(ctx2, listtitle2, edumod);
+                isFound = true;
             }
         }
 
@@ -658,15 +655,13 @@ namespace OGN.Sharepoint.Services
         private void UpdateLink(ClientContext ctx, string listtitle, string linktitle, string linkurl, string column, string val)
         {
             Web site = ctx.Web;
-
             List list = site.Lists.GetByTitle(listtitle);
-
             CamlQuery qry = new CamlQuery();
             //qry.ViewXml = "<View><Query><Where><Eq><FieldRef Name='Title'/><Value Type='Text'>announce</Value></Eq></Where></Query></View>";
             ListItemCollection items = list.GetItems(qry);
             ctx.Load(items);
             ctx.ExecuteQuery();
-
+            bool isFound = false;
             foreach (ListItem item in items)
             {
                 FieldUrlValue url = (FieldUrlValue)item["URL"];
@@ -676,10 +671,16 @@ namespace OGN.Sharepoint.Services
                     item["URL"] = url;
                     if (column.Equals(string.Empty)) { } else { item[column] = val; }
                     item.Update();
+                    isFound = true;
                     break;
                 }
             }
             ctx.ExecuteQuery();
+
+            if (isFound == false)
+            {
+                this.CreateLink(ctx, listtitle, linkurl, linktitle, column, val, new OperationReport());
+            }
         }
 
 
@@ -797,7 +798,9 @@ namespace OGN.Sharepoint.Services
                     if (!string.IsNullOrEmpty(edu.EduWorkSpace))
                     {
                         report.Messages.Add("Maak link van en naar LOI opleidingssite.");
-                        EduProgrammeRef loisite = new EduProgrammeRef(edu.EduWorkSpace, edu);
+                        EduProgramme loiEdu = new EduProgramme();
+                        loiEdu.Code = edu.EduWorkSpace;
+                        EduProgrammeRef loisite = new EduProgrammeRef(edu.EduWorkSpace, loiEdu);
                         if (this.SiteExists(ctx, loisite))
                         {
                             ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
@@ -835,7 +838,7 @@ namespace OGN.Sharepoint.Services
                 report.Messages.Add("Beschrijvingen van links naar deze site gewijzigd.");
                 ClientContext ctx_home = this.GetSite(_edu_url);
                 UpdateLink(ctx_home, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
-                report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
+                report.Messages.Add("Link vanaf sitecollectie naar opleidingssite aangepast.");
                 this.AddTerm(ctx, _edu_id, edu);
                 report.Messages.Add("Term gemaakt.");
 
@@ -964,7 +967,6 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Wijzig modulenaam: id->" + mod.Id + ", code->" + mod.Code);
-
                 ClientContext ctx_mod = this.GetSite(mod.GetUrl());
                 this.ChangeTitle(ctx_mod, mod);
                 report.Messages.Add("Site titel gecheckt.");
@@ -988,6 +990,9 @@ namespace OGN.Sharepoint.Services
 
                 this.UpdateAllLinksToEduOrMod(ctx_mod, _link2edu_list, mod);
                 report.Messages.Add("Beschrijvingen van links naar deze site gecheckt.");
+                ClientContext ctx_home = this.GetSite(_mod_url);
+                UpdateLink(ctx_home, _mod_siteslist, mod.GetUrl(), mod.GetUrl(), _mod_siteslist_column, mod.GetTitle());
+                report.Messages.Add("Link vanaf sitecollectie naar modulesite aangepast.");
 
                 //create links from and to module site
                 if (!string.IsNullOrEmpty(mod.LinkedModule))
