@@ -842,6 +842,39 @@ namespace OGN.Sharepoint.Services
                 this.AddTerm(ctx, _edu_id, edu);
                 report.Messages.Add("Term gemaakt.");
 
+                if (!string.IsNullOrEmpty(edu.EduWorkSpace))
+                {
+                    report.Messages.Add("Check voor link naar andere opleiding");
+                    EduProgramme loiEdu = new EduProgramme();
+                    loiEdu.Code = edu.EduWorkSpace;
+                    EduProgrammeRef loisite = new EduProgrammeRef(edu.EduWorkSpace, loiEdu);
+                    if (this.SiteExists(ctx, loisite))
+                    {
+                        ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
+                        if (LinkExists(ctx, _link2mod_list, loisite.GetUrl()) == false)
+                        {
+                            CreateLink(ctx, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2edu_list_column, "LOI " + _link2edu_list_value, report);
+                            report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
+                        }
+                        else
+                        {
+                            report.Messages.Add("Link naar LOI opleidingssite was er al.");
+                        }
+                        if (LinkExists(ctx_loi, _link2mod_list, edu.GetUrl()) == false)
+                        {
+                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), _link2edu_list_column, edu.EduType + " " + _link2edu_list_value, report);
+                            report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
+                        }
+                        else
+                        {
+                            report.Messages.Add("Link vanuit LOI opleidingssite was er al.");
+                        }
+                    }
+                    else
+                    {
+                        this.LogWarning("Check: Link vanuit LOI opleidingssite niet gemaakt. LOI opleidingssite bestaat niet.", report);
+                    }
+                }
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Update(edu):\n" + e.Message, report); }
             return report;
@@ -1005,11 +1038,25 @@ namespace OGN.Sharepoint.Services
                     if (this.SiteExists(ctx, loisite))
                     {
                         ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                        CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2mod_list_column, "LOI " + _link2mod_list_value, report);
-                        report.Messages.Add("Link van Studieplan site naar LOI modulesite gemaakt.");
+                        if (LinkExists(ctx, _link2edu_list, loisite.GetUrl()) == false)
+                        {
 
-                        CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), _link2mod_list_column, "Studieplan " + _link2mod_list_value, report);
-                        report.Messages.Add("Link vanuit LOI modulesite naar Studieplan site gemaakt.");
+                            CreateLink(ctx_mod, _link2edu_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2mod_list_column, "LOI " + _link2mod_list_value, report);
+                            report.Messages.Add("Link van Studieplan site naar LOI modulesite gemaakt.");
+                        }
+                        else
+                        {
+                            report.Messages.Add("Link van Studieplan site naar LOI modulesite was er al.");
+                        }
+                        if (LinkExists(ctx, _link2edu_list, loisite.GetUrl()) == false)
+                        {
+                            CreateLink(ctx_loi, _link2edu_list, mod.GetUrl(), mod.GetTitle(), _link2mod_list_column, "Studieplan " + _link2mod_list_value, report);
+                            report.Messages.Add("Link vanuit LOI modulesite naar Studieplan site gemaakt.");
+                        }
+                        else
+                        {
+                            report.Messages.Add("Link vanuit LOI modulesite naar Studieplan site was er al.");
+                        }
                     }
                     else
                     {
