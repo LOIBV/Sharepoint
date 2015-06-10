@@ -472,7 +472,7 @@ namespace OGN.Sharepoint.Services
         /// </summary>
         /// <param name="ctx">SP context</param>
         /// <param name="edumod">eduprogramme or module</param>
-        private void ChangeTitle(ClientContext ctx, IEduModSite edumod)
+        private bool ChangeTitle(ClientContext ctx, IEduModSite edumod)
         {
             Web site = ctx.Web;
             ctx.Load(site);
@@ -499,7 +499,12 @@ namespace OGN.Sharepoint.Services
                         }
                     } // end for
                 } // end if
+                return true;
             }  // end if
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -618,7 +623,7 @@ namespace OGN.Sharepoint.Services
         /// <param name="ctx">SP context</param>
         /// <param name="listtitle">the name of the list of links</param>
         /// <param name="edumod">the eduprogramme or module</param>
-        private void UpdateAllLinksToEduOrMod(ClientContext ctx, string listtitle, IEduModSite edumod)
+        private bool UpdateAllLinksToEduOrMod(ClientContext ctx, string listtitle, IEduModSite edumod)
         {
             Web site = ctx.Web;
 
@@ -640,6 +645,7 @@ namespace OGN.Sharepoint.Services
                 this.UpdateLink(ctx2, listtitle2, edumod);
                 isFound = true;
             }
+            return isFound;
         }
 
         /// <summary>
@@ -832,10 +838,24 @@ namespace OGN.Sharepoint.Services
                 report.Messages.Add("Wijzig opleidingsnaam: id->" + edu.Id + ", code->" + edu.Code + ", nieuwe naam->" + edu.Name);
 
                 ClientContext ctx = this.GetSite(edu.GetUrl());
-                this.ChangeTitle(ctx, edu);
-                report.Messages.Add("Site titel gewijzigd.");
-                this.UpdateAllLinksToEduOrMod(ctx, _link2mod_list, edu);
-                report.Messages.Add("Beschrijvingen van links naar deze site gewijzigd.");
+                if (this.ChangeTitle(ctx, edu))
+                {
+                    report.Messages.Add("Site titel gewijzigd.");
+                }
+                else
+                {
+                    report.Messages.Add("Site titel hoefde niet gewijzigd te worden.");
+                }
+                
+                if (this.UpdateAllLinksToEduOrMod(ctx, _link2mod_list, edu))
+                {
+                    report.Messages.Add("Beschrijvingen van links naar deze site geupdate.");
+                }
+                else
+                {
+                    report.Messages.Add("Beschrijvingen van links naar deze site hoefden niet geupdate te worden.");
+                }
+                
                 ClientContext ctx_home = this.GetSite(_edu_url);
                 UpdateLink(ctx_home, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
                 report.Messages.Add("Link vanaf sitecollectie naar opleidingssite aangepast.");
@@ -848,7 +868,7 @@ namespace OGN.Sharepoint.Services
                     EduProgramme loiEdu = new EduProgramme();
                     loiEdu.Code = edu.EduWorkSpace;
                     EduProgrammeRef loisite = new EduProgrammeRef(edu.EduWorkSpace, loiEdu);
-                    if (this.SiteExists(ctx, loisite))
+                    if (this.SiteExists(ctx_home, loisite))
                     {
                         ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
                         if (LinkExists(ctx, _link2mod_list, loisite.GetUrl()) == false)
@@ -1035,7 +1055,7 @@ namespace OGN.Sharepoint.Services
                     loiMod.Code = mod.LinkedModule;
                     ModuleRef loisite = new ModuleRef(mod.LinkedModule, loiMod);
                     ClientContext ctx = new ClientContext(_mod_url);
-                    if (this.SiteExists(ctx, loisite))
+                    if (this.SiteExists(ctx_home, loisite))
                     {
                         ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
                         if (LinkExists(ctx, _link2edu_list, loisite.GetUrl()) == false)
@@ -1220,7 +1240,9 @@ namespace OGN.Sharepoint.Services
                     if (oldName.Equals(newName))
                     {
                         report.Messages.Add("De naam van de opleiding hoeft niet gewijzigd te worden.");
-                        this.LogWarning("Er kon geen actie bepaald worden. Er zijn geen acties genomen.", report);
+                        OperationReport report1 = this.Update(edu);
+                        foreach (string msg in report1.Messages) { report.Messages.Add(msg); }
+                        report.ResultType = report1.ResultType;
                     }
                     else
                     {
@@ -1254,7 +1276,6 @@ namespace OGN.Sharepoint.Services
                 {
                     report.Messages.Add("De modulesite bestaat al.");
                     ctx_mod = this.GetSite(mod.GetUrl());
-
                     report.Messages.Add("Actie bepaald: Wijziging op site: " + mod.GetUrl());
                     OperationReport report1 = this.Update(mod);
                     foreach (string msg in report1.Messages) { report.Messages.Add(msg); }
