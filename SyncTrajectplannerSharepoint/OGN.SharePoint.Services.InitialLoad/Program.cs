@@ -17,39 +17,6 @@ namespace OGN.SharePoint.Services.InitialLoad
 
         static void Main(string[] args)
         {
-            SyncEduSitesService svc = new SyncEduSitesService(false);
-            //svc.FixSiteNames();
-            EduProgramme edu = new EduProgramme();
-            edu.Code = "1572.100";
-            edu.Name = "Test Name5";
-            edu.Id = "vio1";
-            edu.EduType = "TEST";
-
-            EduProgrammeVal eduVal = new EduProgrammeVal();
-            eduVal.Code = edu.Code;
-            eduVal.Id = edu.Id;
-            eduVal.Name = edu.Name;
-            eduVal.EduType = edu.EduType;
-
-            //svc.DoUndeterminedAction(eduVal);
-
-            Module mod = new Module();
-            mod.Code = "99999";
-            mod.Id = "op1";
-            mod.Name = "Test Module LOI4";
-            mod.EduCode = "1572.100";
-            
-
-            ModuleVal modVal = new ModuleVal();
-            modVal.Code = mod.Code;
-            modVal.Id = mod.Id;
-            modVal.Name = mod.Name;
-            modVal.EduCode = mod.EduCode;
-            modVal.LinkedModule = mod.LinkedModule;
-
-            svc.DoUndeterminedAction(modVal);
-
-
             if (args.Length == 0)
             {
                 DoEdu = true;
@@ -114,7 +81,7 @@ namespace OGN.SharePoint.Services.InitialLoad
                             {
                                 Console.WriteLine("{3} out of {4}: Creating opleidingssite: {0}, type: {1}, code: {2}", edu.Name, edu.EduType, edu.Id, i.ToString(), opl.Length.ToString());
                                 DateTime startTime = DateTime.Now;
-                                svc.Create(edu);
+                                svc.DoUndeterminedAction(edu);
                                 DateTime endTime = DateTime.Now;
                                 TimeSpan diff = endTime.Subtract(startTime);
                                 Console.WriteLine("Opleiding Site creation took: {0} seconds", diff.TotalSeconds.ToString());
@@ -144,8 +111,8 @@ namespace OGN.SharePoint.Services.InitialLoad
                             try
                             {
                                 DateTime startTime = DateTime.Now;
-                                Console.WriteLine("{3} out of {4}: Creating modulesite: {0}, code: {1}", mod.Name,  mod.Id, i.ToString(), mods.Length.ToString());
-                                svc.Create(mod);
+                                Console.WriteLine("{2} out of {3}: Creating modulesite: {0}, code: {1}", mod.Name,  mod.Id, i.ToString(), mods.Length.ToString());
+                                svc.DoUndeterminedAction(mod);
                                 DateTime endTime = DateTime.Now;
                                 TimeSpan diff = endTime.Subtract(startTime);
                                 Console.WriteLine("Module Site creation took: {0} seconds", diff.TotalSeconds.ToString());
@@ -170,6 +137,8 @@ namespace OGN.SharePoint.Services.InitialLoad
                             Link rel = new Link();
                             rel.EduProgramme = new EduProgrammeRef(val[0]);
                             rel.Module = new ModuleRef(val[1]);
+                            rel.EduProgramme.Code = val[0];
+                            rel.Module.Code = val[1];
                             try
                             {
                                 Console.WriteLine("{2} out of {3}: Creating relation Opleiding: {0}, Module: {1}", rel.EduProgramme.Id, rel.Module.Id, i.ToString(), rels.Length.ToString());
