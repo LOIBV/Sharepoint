@@ -83,7 +83,7 @@ namespace OGN.Sharepoint.Services
         /// </summary>
         /// <param name="baseurl">the url of the parent site</param>
         /// <returns></returns>
-        string GetUrl();
+        string Url { get; set; }
     }
 
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "Wijziging {0}")]
@@ -158,6 +158,7 @@ namespace OGN.Sharepoint.Services
         string _name;
         string _eduWorkSpace;
         string _eduType;
+        string _url;
 
         public string Id
         {
@@ -211,9 +212,10 @@ namespace OGN.Sharepoint.Services
             return (string.Empty.Equals(this.Code)) ? this.Name : this.Name + " " + this.Code;
         }
 
-        public string GetUrl()
+        public string Url
         {
-            return ConfigurationManager.AppSettings["sp.sitecollection:edu:url"] + this.GetSiteName();
+            get { return _url; }
+            set { _url = value; }
         }
 
 
@@ -294,7 +296,7 @@ namespace OGN.Sharepoint.Services
         string _name;
         string _eduCode;
         string _linkedModule;
-
+        string _url;
 
         public string Id
         {
@@ -302,6 +304,11 @@ namespace OGN.Sharepoint.Services
             set { _id = value; }
         }
 
+        public string Url
+        {
+            get { return _url; }
+            set { _url = value; }
+        }
         public string Code
         {
             get { return _code; }

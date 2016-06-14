@@ -20,6 +20,11 @@ namespace OGN.Sharepoint.Services
         //web.config settings (see constructor)
         private string _mod_url;
         private string _edu_url;
+
+        private string _modHome_url;
+        private string _eduHome_url;
+
+
         private string _edu_siteslist;
         private string _edu_siteslist_column;
         private string _edu_siteslist_school_column;
@@ -50,6 +55,12 @@ namespace OGN.Sharepoint.Services
         private string _link2mod_list_column;
         private string _link2mod_list_value;
 
+        private int _modSiteCollectionCount;
+        private int _eduSiteCollectionCount;
+
+        private int _modMaxSiteCount;
+        private int _eduMaxSiteCount;
+
 
 
         System.Net.Mail.SmtpClient _mailer;
@@ -70,11 +81,21 @@ namespace OGN.Sharepoint.Services
                 : ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
             //the credentials of the application pool are used.
-            _creds = CredentialCache.DefaultNetworkCredentials;
-            //_creds = new NetworkCredential("user", "pass", "ad"); //for testing
+            //_creds = CredentialCache.DefaultNetworkCredentials; // for production
+            
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
+
+            _modHome_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:HomeUrl"];
+            _eduHome_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:HomeUrl"];
+
+
+            _modSiteCollectionCount = int.Parse(ConfigurationManager.AppSettings["sp.sitecollection:mod:count"]);
+            _eduSiteCollectionCount = int.Parse(ConfigurationManager.AppSettings["sp.sitecollection:edu:count"]);
+
+            _modMaxSiteCount = int.Parse(ConfigurationManager.AppSettings["sp.sitecollection:mod:maxSiteCount"]);
+            _eduMaxSiteCount = int.Parse(ConfigurationManager.AppSettings["sp.sitecollection:edu:maxSiteCount"]);
 
             _edu_siteslist = ConfigurationManager.AppSettings["sp.sitecollection:edu:list2sites"];
             _edu_siteslist_column = ConfigurationManager.AppSettings["sp.sitecollection:edu:list2sites:column"];
@@ -239,6 +260,66 @@ namespace OGN.Sharepoint.Services
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
+        private ClientContext GetSite(string url, IEduModSite edumod)
+        {
+            // Check each individual site collection for site existance
+            if (edumod.GetType() == typeof(EduProgrammeVal))
+            {
+                for (int siteCount = 0; siteCount <= _eduSiteCollectionCount; siteCount++)
+                {
+                    string siteUrl = url + "opleiding" + siteCount.ToString("0#");
+                    string fullUrl = url + "opleiding" + siteCount.ToString("0#") + "/" + edumod.Code;
+                    ClientContext ctx = new ClientContext(siteUrl);
+                    ctx.Credentials = _creds;
+                    var web = ctx.Web;
+                    ctx.Load(web, w => w.Webs.Where(webs => webs.Url == fullUrl));
+                    ctx.Load(web, w => w.Url);
+                    ctx.ExecuteQuery();
+                    if (web.Webs.Count == 0)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        edumod.Url = web.Url + "/" + edumod.GetSiteName();
+                        return ctx;
+                    }
+                }
+            }
+
+            if (edumod.GetType() == typeof(ModuleVal))
+            {
+                for (int siteCount = 0; siteCount <= _modSiteCollectionCount; siteCount++)
+                {
+                    string siteUrl = url + "module" + siteCount.ToString("0#");
+                    string fullUrl = url + "module" + siteCount.ToString("0#") + "/" + edumod.Code;
+                    ClientContext ctx = new ClientContext(fullUrl);
+                    ctx.Credentials = _creds;
+                    var web = ctx.Web;
+                    ctx.Load(web, w => w.Webs);
+                    var subWeb = (from w in web.Webs
+                                  where w.Url == fullUrl
+                                  select w).SingleOrDefault();
+                    ctx.ExecuteQuery();
+                    if (web.Webs.Count == 0)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        edumod.Url = web.Url + "/" + edumod.GetSiteName();
+                        return ctx;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// get context for SP Site
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
         private ClientContext GetSite(string url)
         {
             ClientContext ctx = new ClientContext(url);
@@ -300,13 +381,83 @@ namespace OGN.Sharepoint.Services
         /// <summary>
         /// create a SP site for an eduprogramme or module
         /// </summary>
+        /// <returns>full url to site</returns>
         /// <param name="ctx">SP context</param>
         /// <param name="edumod">eduprogramme or module</param>
         /// <param name="template">site template id</param>
-        private void CreateSite(ClientContext ctx, IEduModSite edumod, string template)
+        private string CreateSite(IEduModSite edumod, string template)
         {
+            string siteUrl = GetAvailableSiteUrl(edumod);
+            ClientContext ctx = new ClientContext(siteUrl);
             this.CreateSite(ctx, edumod.GetTitle(), edumod.GetSiteName(), template);
+            Web site = ctx.Web;
+            ctx.Load(site);
+            ctx.ExecuteQuery();
+            string fullUrl = ctx.Web.Url + "/" + edumod.GetSiteName();
+            return fullUrl;
         }
+
+        private string GetWebTemplateName(ClientContext ctx, string template)
+        {
+            Web site = ctx.Web;
+            WebTemplateCollection templates = ctx.Web.GetAvailableWebTemplates(1043, false);
+            ctx.Load(templates);
+            ctx.ExecuteQuery();
+            // Get site using call
+            var templateGet = (from t in templates
+                               where t.Title.ToLower() == template.ToLower()
+                               select t).FirstOrDefault();
+            return templateGet.Name;
+        }
+
+        private string GetAvailableSiteUrl(IEduModSite edumod)
+        {
+            // Check each individual site collection for site existance
+            if (edumod.GetType() == typeof(EduProgrammeVal))
+            {
+                for (int siteCount = 0; siteCount <= _eduSiteCollectionCount; siteCount++)
+                {
+                    string siteUrl = _edu_url + "opleiding" + siteCount.ToString("0#");
+                    ClientContext ctx = new ClientContext(siteUrl);
+                    ctx.Credentials = _creds;
+                    var web = ctx.Web;
+                    ctx.Load(web, w => w.Webs);
+                    ctx.ExecuteQuery();
+                    if (web.Webs.Count >= _eduMaxSiteCount)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        return siteUrl;
+                    }
+                }
+                return null;
+            }
+
+            if (edumod.GetType() == typeof(ModuleVal))
+            {
+                for (int siteCount = 0; siteCount <= _modSiteCollectionCount; siteCount++)
+                {
+                    string siteUrl = _mod_url + "module" + siteCount.ToString("0#");
+                    ClientContext ctx = new ClientContext(siteUrl);
+                    ctx.Credentials = _creds;
+                    var web = ctx.Web;
+                    ctx.Load(web, w => w.Webs.Count);
+                    ctx.ExecuteQuery();
+                    if (web.Webs.Count >= _modMaxSiteCount)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        return siteUrl;
+                    }
+                }
+                return null;
+            }
+            return null;
+        } // end function
 
         /// <summary>
         /// create a SP site
@@ -318,10 +469,8 @@ namespace OGN.Sharepoint.Services
         private void CreateSite(ClientContext ctx, string title, string url, string template)
         {
             Web site = ctx.Web;
-
-
             WebCreationInformation newsite = new WebCreationInformation();
-            newsite.WebTemplate = template;
+            newsite.WebTemplate = GetWebTemplateName(ctx, template);
             newsite.Title = title;
             newsite.Url = url;
             newsite.UseSamePermissionsAsParentSite = true;
@@ -427,19 +576,16 @@ namespace OGN.Sharepoint.Services
         private bool SiteExists(ClientContext ctx, IEduModSite edumod)
         {
             Web site = ctx.Web;
-
             ctx.Load(site.Webs, sites => sites.Include(subsite => subsite.Url));
             ctx.ExecuteQuery();
-            int count = site.Webs.Count(subsite => subsite.Url.EndsWith("/" + edumod.GetSiteName()));
-            if (count <= 0)
+
+            int siteCount = site.Webs.Count(subsite => subsite.Url.EndsWith("/" + edumod.GetSiteName()));
+            if (siteCount > 0)
             {
-                return false;
-            }
-            else
-            {
+                edumod.Url = ctx.Url + "/" + edumod.GetSiteName();
                 return true;
             }
-
+            return false;
         }
 
         /// <summary>
@@ -646,7 +792,7 @@ namespace OGN.Sharepoint.Services
                 isFound = true;
             }
 
-            
+
             return isFound;
         }
 
@@ -658,7 +804,7 @@ namespace OGN.Sharepoint.Services
         /// <param name="linkto">the eduprogramme or module to which the link targets</param>
         private void UpdateLink(ClientContext ctx, string listtitle, IEduModSite linkto)
         {
-            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.GetUrl(), string.Empty, string.Empty);
+            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.Url, string.Empty, string.Empty);
         }
         private void UpdateLink(ClientContext ctx, string listtitle, string linktitle, string linkurl, string column, string val)
         {
@@ -783,24 +929,24 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Maak opleiding: id->" + edu.Id + ", code->" + edu.Code + ", naam->" + edu.Name + ", LOI site->" + edu.EduWorkSpace);
-                ClientContext ctx = this.GetSite(_edu_url);
-                if (this.SiteExists(ctx, edu))
+                ClientContext ctx = this.GetSite(_edu_url, edu);
+                if (ctx != null)
                 {
                     this.LogWarning("Site niet gemaakt. Opleiding bestaat al.", report);
                 }
                 else
                 {
                     //create the site
-                    this.CreateSite(ctx, edu, _edutemplate);
+                    edu.Url = CreateSite(edu, _edutemplate);
                     report.Messages.Add("Site gemaakt.");
-                    ClientContext ctx_edu = this.GetSite(edu.GetUrl());
+                    ClientContext ctx_edu = this.GetSite(edu.Url);
 
-                    //change permissions on lists, sites and doclibs as configured
+                    //change permissions on lists, sites and doclibs as configured                          ,
                     ChangePermissions(ctx_edu, SiteType.edu);
                     report.Messages.Add("Permissies van Doc.Libs en lijsten op site aangepast.");
 
                     // Opleidingsmatrix
-                    CreateLink(ctx, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle(), _edu_siteslist_school_column, edu.EduType);
+                    CreateLink(ctx, _edu_siteslist, edu.Url, edu.Url, _edu_siteslist_column, edu.GetTitle(), _edu_siteslist_school_column, edu.EduType);
                     report.Messages.Add("Link vanaf sitecollectie naar opleidingssite gemaakt.");
 
                     if (!string.IsNullOrEmpty(edu.EduWorkSpace))
@@ -811,11 +957,11 @@ namespace OGN.Sharepoint.Services
                         EduProgrammeRef loisite = new EduProgrammeRef(edu.EduWorkSpace, loiEdu);
                         if (this.SiteExists(ctx, loisite))
                         {
-                            ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                            CreateLink(ctx_edu, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2edu_list_column, "LOI " + _link2edu_list_value, report);
+                            ClientContext ctx_loi = this.GetSite(loisite.Url);
+                            CreateLink(ctx_edu, _link2mod_list, loisite.Url, this.GetTitle(ctx_loi), _link2edu_list_column, "LOI " + _link2edu_list_value, report);
                             report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
 
-                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), _link2edu_list_column, edu.EduType + " " + _link2edu_list_value, report);
+                            CreateLink(ctx_loi, _link2mod_list, edu.Url, edu.GetTitle(), _link2edu_list_column, edu.EduType + " " + _link2edu_list_value, report);
                             report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
                         }
                         else
@@ -825,7 +971,7 @@ namespace OGN.Sharepoint.Services
                     }
                     this.AddTerm(ctx, _edu_id, edu);
                     report.Messages.Add("Term gemaakt.");
-                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '" + edu.GetTitle() + "'", edu.GetUrl());
+                    this.SendNotification2Business("Nieuwe SharePoint site voor opleiding '" + edu.GetTitle() + "'", edu.Url);
                 }
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Create(edu):\n" + e.Message, report); }
@@ -839,7 +985,7 @@ namespace OGN.Sharepoint.Services
             {
                 report.Messages.Add("Wijzig opleidingsnaam: id->" + edu.Id + ", code->" + edu.Code + ", nieuwe naam->" + edu.Name);
 
-                ClientContext ctx = this.GetSite(edu.GetUrl());
+                ClientContext ctx = this.GetSite(edu.Url);
                 if (this.ChangeTitle(ctx, edu))
                 {
                     report.Messages.Add("Site titel gewijzigd.");
@@ -848,7 +994,7 @@ namespace OGN.Sharepoint.Services
                 {
                     report.Messages.Add("Site titel hoefde niet gewijzigd te worden.");
                 }
-                
+
                 if (this.UpdateAllLinksToEduOrMod(ctx, _link2mod_list, edu))
                 {
                     report.Messages.Add("Beschrijvingen van links naar deze site geupdate.");
@@ -857,9 +1003,9 @@ namespace OGN.Sharepoint.Services
                 {
                     report.Messages.Add("Beschrijvingen van links naar deze site hoefden niet geupdate te worden.");
                 }
-                
-                ClientContext ctx_home = this.GetSite(_edu_url);
-                UpdateLink(ctx_home, _edu_siteslist, edu.GetUrl(), edu.GetUrl(), _edu_siteslist_column, edu.GetTitle());
+
+                ClientContext ctx_home = this.GetSite(_eduHome_url);
+                UpdateLink(ctx_home, _edu_siteslist, edu.Url, edu.Url, _edu_siteslist_column, edu.GetTitle());
                 report.Messages.Add("Link vanaf sitecollectie naar opleidingssite aangepast.");
                 this.AddTerm(ctx, _edu_id, edu);
                 report.Messages.Add("Term gemaakt.");
@@ -872,19 +1018,19 @@ namespace OGN.Sharepoint.Services
                     EduProgrammeRef loisite = new EduProgrammeRef(edu.EduWorkSpace, loiEdu);
                     if (this.SiteExists(ctx_home, loisite))
                     {
-                        ClientContext ctx_loi = this.GetSite(loisite.GetUrl());
-                        if (LinkExists(ctx, _link2mod_list, loisite.GetUrl()) == false)
+                        ClientContext ctx_loi = this.GetSite(loisite.Url);
+                        if (LinkExists(ctx, _link2mod_list, loisite.Url) == false)
                         {
-                            CreateLink(ctx, _link2mod_list, loisite.GetUrl(), this.GetTitle(ctx_loi), _link2edu_list_column, "LOI " + _link2edu_list_value, report);
+                            CreateLink(ctx, _link2mod_list, loisite.Url, this.GetTitle(ctx_loi), _link2edu_list_column, "LOI " + _link2edu_list_value, report);
                             report.Messages.Add("Link naar LOI opleidingssite gemaakt.");
                         }
                         else
                         {
                             report.Messages.Add("Link naar LOI opleidingssite was er al.");
                         }
-                        if (LinkExists(ctx_loi, _link2mod_list, edu.GetUrl()) == false)
+                        if (LinkExists(ctx_loi, _link2mod_list, edu.Url) == false)
                         {
-                            CreateLink(ctx_loi, _link2mod_list, edu.GetUrl(), edu.GetTitle(), _link2edu_list_column, edu.EduType + " " + _link2edu_list_value, report);
+                            CreateLink(ctx_loi, _link2mod_list, edu.Url, edu.GetTitle(), _link2edu_list_column, edu.EduType + " " + _link2edu_list_value, report);
                             report.Messages.Add("Link vanuit LOI opleidingssite gemaakt.");
                         }
                         else
@@ -908,11 +1054,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Deactiveer opleidingssite: id->" + edu.Id);
-                ClientContext ctx = this.GetSite(edu.GetUrl());
+                ClientContext ctx = this.GetSite(edu.Url);
                 this.ChangePermissions(ctx, true);
                 report.Messages.Add("Permissies ingetrokken.");
                 this.SendNotification2Business("Permissies gewijzigd van SharePoint site voor opleiding"
-                               , "De permissies zijn gewijzigd omdat de opleiding inactief is geworden.\n" + edu.GetUrl());
+                               , "De permissies zijn gewijzigd omdat de opleiding inactief is geworden.\n" + edu.Url);
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(edu):\n" + e.Message, report); }
             return report;
@@ -950,7 +1096,7 @@ namespace OGN.Sharepoint.Services
                 else
                 {
                     //create module site
-                    this.CreateSite(ctx, mod, _modtemplate);
+                    this.CreateSite(mod, _modtemplate);
                     report.Messages.Add("Site gemaakt.");
 
                     //create subsite, add module name to subsite
@@ -1131,7 +1277,7 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Maak links: opl_id->" + link.EduProgramme.Id + ", mod_id->" + link.Module.Id);
-                ClientContext ctx_edu = this.GetSite(link.EduProgramme.GetUrl());
+                ClientContext ctx_edu = this.GetSite(link.EduProgramme.Url);
                 ClientContext ctx_mod = this.GetSite(link.Module.GetUrl());
 
                 if (this.LinkExists(ctx_edu, _link2mod_list, link.Module.GetUrl()))
@@ -1144,14 +1290,14 @@ namespace OGN.Sharepoint.Services
                     this.CreateLink(ctx_edu, _link2mod_list, link.Module.GetUrl(), this.GetTitle(ctx_mod), _link2mod_list_column, _link2mod_list_value, string.Empty, string.Empty);
                     report.Messages.Add("Link naar modulesite gemaakt.");
                 }
-                if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl()))
+                if (this.LinkExists(ctx_mod, _link2edu_list, link.EduProgramme.Url))
                 {
                     Console.WriteLine("Link naar opleidingssite niet gemaakt. Link bestaat al.");
                     this.LogWarning("Link naar opleidingssite niet gemaakt. Link bestaat al.", report);
                 }
                 else
                 {
-                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl(), this.GetTitle(ctx_edu), _link2edu_list_column, _link2edu_list_value, string.Empty, string.Empty);
+                    this.CreateLink(ctx_mod, _link2edu_list, link.EduProgramme.Url, this.GetTitle(ctx_edu), _link2edu_list_column, _link2edu_list_value, string.Empty, string.Empty);
                     report.Messages.Add("Link naar opleidingssite gemaakt.");
                 }
             }
@@ -1186,11 +1332,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Verwijder links: opl_id->" + link.EduProgramme.Id + ", mod_id->" + link.Module.Id);
-                ClientContext ctx_edu = this.GetSite(link.EduProgramme.GetUrl());
+                ClientContext ctx_edu = this.GetSite(link.EduProgramme.Url);
                 this.DeleteLink(ctx_edu, _link2mod_list, link.Module.GetUrl());
                 report.Messages.Add("Link naar modulesite verwijderd.");
                 ClientContext ctx_mod = this.GetSite(link.Module.GetUrl());
-                this.DeleteLink(ctx_mod, _link2edu_list, link.EduProgramme.GetUrl());
+                this.DeleteLink(ctx_mod, _link2edu_list, link.EduProgramme.Url);
                 report.Messages.Add("Link naar opleidingssite verwijderd.");
             }
             catch (Exception e) { this.LogException(e, "Er is een fout opgetreden tijdens operatie Delete(link):\n" + e.Message, report); }
@@ -1232,11 +1378,11 @@ namespace OGN.Sharepoint.Services
             try
             {
                 report.Messages.Add("Onbepaalde actie op opleiding: id->" + edu.Id + ", code->" + edu.Code + ", naam->" + edu.Name + ", type->" + edu.EduType);
-                ClientContext ctx = this.GetSite(_edu_url);
-                if (this.SiteExists(ctx, edu))
+                ClientContext ctx = this.GetSite(_edu_url, edu);
+                if (ctx != null)
                 {
                     report.Messages.Add("De opleidingssite bestaat al.");
-                    ClientContext ctx_edu = this.GetSite(edu.GetUrl());
+                    ClientContext ctx_edu = this.GetSite(edu.Url);
                     string oldName = this.GetTitle(ctx_edu);
                     string newName = edu.GetTitle();
                     if (oldName.Equals(newName))
