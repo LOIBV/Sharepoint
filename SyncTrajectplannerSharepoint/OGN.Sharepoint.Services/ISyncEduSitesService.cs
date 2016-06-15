@@ -346,20 +346,12 @@ namespace OGN.Sharepoint.Services
                 title = this.Name + " " + this.Code;
                 return title;
             }
-
-
         }
 
         public string GetSubSiteUrl(string subSiteName)
         {
-            string fullUrl = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"] + this.GetSiteName();
-            fullUrl += "/" + subSiteName;
+            string fullUrl = _url + "/" + subSiteName;
             return fullUrl;
-        }
-
-        public string GetUrl()
-        {
-            return ConfigurationManager.AppSettings["sp.sitecollection:mod:url"] + this.GetSiteName();
         }
 
         public string GetSiteName()
