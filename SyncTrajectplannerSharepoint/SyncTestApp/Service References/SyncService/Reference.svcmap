@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="40e05386-aa50-4660-b4c2-de57ad3c853d" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings />
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>true</ReferenceAllAssemblies>
+    <ReferencedAssemblies />
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="http://localhost:49947/SyncEduSitesService.svc" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="SyncEduSitesService.disco" MetadataType="Disco" ID="7a32d518-5b34-406a-982a-f16ec95d0221" SourceId="1" SourceUrl="http://localhost:49947/SyncEduSitesService.svc?disco" />
+    <MetadataFile FileName="SyncEduSitesService.wsdl" MetadataType="Wsdl" ID="f07064db-62e8-456d-b7a1-384eb57d6795" SourceId="1" SourceUrl="http://localhost:49947/SyncEduSitesService.svc?wsdl" />
+    <MetadataFile FileName="SyncEduSitesService1.wsdl" MetadataType="Wsdl" ID="60d5c50b-8862-44c7-a78d-aca578de5cf5" SourceId="1" SourceUrl="http://localhost:49947/SyncEduSitesService.svc?wsdl=wsdl0" />
+    <MetadataFile FileName="SyncEduSitesService.xsd" MetadataType="Schema" ID="e674137c-eb02-49dd-a26c-bc545264adbb" SourceId="1" SourceUrl="http://localhost:49947/SyncEduSitesService.svc?xsd=xsd1" />
+    <MetadataFile FileName="SyncEduSitesService1.xsd" MetadataType="Schema" ID="13dc0446-a30f-44af-843f-4e7c3a16d2fe" SourceId="1" SourceUrl="http://localhost:49947/SyncEduSitesService.svc?xsd=xsd0" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>
