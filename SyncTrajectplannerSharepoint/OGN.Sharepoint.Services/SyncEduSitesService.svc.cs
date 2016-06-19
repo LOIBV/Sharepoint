@@ -82,7 +82,7 @@ namespace OGN.Sharepoint.Services
 
             //the credentials of the application pool are used.
             _creds = CredentialCache.DefaultNetworkCredentials; // for production
-            
+
 
             _mod_url = ConfigurationManager.AppSettings["sp.sitecollection:mod:url"];
             _edu_url = ConfigurationManager.AppSettings["sp.sitecollection:edu:url"];
@@ -801,9 +801,9 @@ namespace OGN.Sharepoint.Services
         /// <param name="linkto">the eduprogramme or module to which the link targets</param>
         private void UpdateLink(ClientContext ctx, string listtitle, IEduModSite linkto)
         {
-            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.Url, string.Empty, string.Empty);
+            UpdateLink(ctx, listtitle, linkto.GetTitle(), linkto.Url, string.Empty, string.Empty, string.Empty, string.Empty);
         }
-        private void UpdateLink(ClientContext ctx, string listtitle, string linktitle, string linkurl, string column, string val)
+        private void UpdateLink(ClientContext ctx, string listtitle, string linktitle, string linkurl, string column, string val, string schoolcolumn, string schoolvalue)
         {
             Web site = ctx.Web;
             List list = site.Lists.GetByTitle(listtitle);
@@ -820,7 +820,15 @@ namespace OGN.Sharepoint.Services
                 {
                     url.Description = linktitle;
                     item["URL"] = url;
-                    if (column.Equals(string.Empty)) { } else { item[column] = val; }
+                    if (!string.IsNullOrEmpty(column))
+                    {
+                        item[column] = val;
+                    }
+
+                    if (!string.IsNullOrEmpty(schoolcolumn))
+                    {
+                        item[schoolcolumn] = schoolvalue;
+                    }
                     item.Update();
                     isFound = true;
                     break;
@@ -1018,7 +1026,7 @@ namespace OGN.Sharepoint.Services
                 }
 
                 ClientContext ctx_home = this.GetSite(_eduHome_url);
-                UpdateLink(ctx_home, _edu_siteslist, edu.Url, edu.Url, _edu_siteslist_column, edu.GetTitle());
+                UpdateLink(ctx_home, _edu_siteslist, edu.Url, edu.Url, _edu_siteslist_column, edu.GetTitle(), _edu_siteslist_school_column, edu.EduType);
                 report.Messages.Add("Link vanaf sitecollectie naar opleidingssite aangepast.");
                 this.AddTerm(ctx, _edu_id, edu);
                 report.Messages.Add("Term gemaakt.");
@@ -1239,7 +1247,7 @@ namespace OGN.Sharepoint.Services
                 }
 
                 ClientContext ctx_home = this.GetSite(_modHome_url);
-                UpdateLink(ctx_home, _mod_siteslist, mod.Url, mod.Url, _mod_siteslist_column, mod.GetTitle());
+                UpdateLink(ctx_home, _mod_siteslist, mod.Url, mod.Url, _mod_siteslist_column, mod.GetTitle(), _mod_siteslist_school_column, "LOI");
                 report.Messages.Add("Link vanaf sitecollectie naar modulesite aangepast.");
 
                 //create links from and to module site
