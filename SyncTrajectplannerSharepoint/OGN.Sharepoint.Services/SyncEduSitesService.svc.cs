@@ -31,7 +31,6 @@ namespace OGN.Sharepoint.Services
 
         private string _mod_siteslist;
         private string _mod_siteslist_column;
-        private string _mod_siteslist_school_column;
 
         private NetworkCredential _creds;
         private Guid _loi_id;
@@ -103,7 +102,6 @@ namespace OGN.Sharepoint.Services
 
             _mod_siteslist = ConfigurationManager.AppSettings["sp.sitecollection:mod:list2sites"];
             _mod_siteslist_column = ConfigurationManager.AppSettings["sp.sitecollection:mod:list2sites:column"];
-            _mod_siteslist_school_column = ConfigurationManager.AppSettings["sp.sitecollection:mod:list2sites:schoolcolumn"];
 
             _lcid = Int32.Parse(ConfigurationManager.AppSettings["sp.site:lcid"]);
             _loi_id = new Guid(ConfigurationManager.AppSettings["sp.termstore:id"]);
@@ -1136,7 +1134,7 @@ namespace OGN.Sharepoint.Services
 
                     // Modulematrix
                     ctx = this.GetSite(_modHome_url);
-                    CreateLink(ctx, _mod_siteslist, mod.Url, mod.Url, _mod_siteslist_column, mod.GetTitle(), _mod_siteslist_school_column, "LOI");
+                    CreateLink(ctx, _mod_siteslist, mod.Url, mod.Url, _mod_siteslist_column, mod.GetTitle(), string.Empty,string.Empty);
                     report.Messages.Add("Link vanaf sitecollectie naar modulesite gemaakt.");
 
                     ctx = this.GetSite(mod.Url);
@@ -1247,7 +1245,7 @@ namespace OGN.Sharepoint.Services
                 }
 
                 ClientContext ctx_home = this.GetSite(_modHome_url);
-                UpdateLink(ctx_home, _mod_siteslist, mod.Url, mod.Url, _mod_siteslist_column, mod.GetTitle(), _mod_siteslist_school_column, "LOI");
+                UpdateLink(ctx_home, _mod_siteslist, mod.Url, mod.Url, _mod_siteslist_column, mod.GetTitle(), string.Empty,string.Empty);
                 report.Messages.Add("Link vanaf sitecollectie naar modulesite aangepast.");
 
                 //create links from and to module site
