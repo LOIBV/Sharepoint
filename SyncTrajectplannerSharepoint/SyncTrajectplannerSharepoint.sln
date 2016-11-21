@@ -1,11 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30626.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OGN.Sharepoint.Services", "OGN.Sharepoint.Services\OGN.Sharepoint.Services.csproj", "{535C2126-FC81-45B1-8649-B1707103BCD2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OGN.SharePoint.Services.InitialLoad", "OGN.SharePoint.Services.InitialLoad\OGN.SharePoint.Services.InitialLoad.csproj", "{567B8DD3-83EC-41E3-A7B3-B3AADF91D513}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncTestApp", "SyncTestApp\SyncTestApp.csproj", "{8F0FCA5D-595E-434E-B083-8228979F0BE2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{535C2126-FC81-45B1-8649-B1707103BCD2} = {535C2126-FC81-45B1-8649-B1707103BCD2}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +26,10 @@ Global
 		{567B8DD3-83EC-41E3-A7B3-B3AADF91D513}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{567B8DD3-83EC-41E3-A7B3-B3AADF91D513}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{567B8DD3-83EC-41E3-A7B3-B3AADF91D513}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F0FCA5D-595E-434E-B083-8228979F0BE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F0FCA5D-595E-434E-B083-8228979F0BE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F0FCA5D-595E-434E-B083-8228979F0BE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F0FCA5D-595E-434E-B083-8228979F0BE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

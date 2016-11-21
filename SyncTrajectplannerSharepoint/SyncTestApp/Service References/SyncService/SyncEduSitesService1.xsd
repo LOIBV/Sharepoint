@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://teamwise.ogn.eu/services/" elementFormDefault="qualified" targetNamespace="http://teamwise.ogn.eu/services/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:import schemaLocation="http://localhost:49947/SyncEduSitesService.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+  <xs:element name="MaakOpleiding">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Opleiding" nillable="true" type="tns:OpleidingVal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="OpleidingVal">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:Opleiding">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="Code" nillable="true" type="xs:string" />
+          <xs:element name="EduType" nillable="true" type="xs:string" />
+          <xs:element name="EduWorkSpace" nillable="true" type="xs:string" />
+          <xs:element name="Id" nillable="true" type="xs:string" />
+          <xs:element name="Naam" nillable="true" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="OpleidingVal" nillable="true" type="tns:OpleidingVal" />
+  <xs:complexType name="Opleiding">
+    <xs:sequence />
+  </xs:complexType>
+  <xs:element name="Opleiding" nillable="true" type="tns:Opleiding" />
+  <xs:element name="MaakOpleidingResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="MaakOpleidingResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="ActieRapport">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="ActieResultaat" type="tns:ActieResultaat" />
+      <xs:element minOccurs="0" name="Berichten" nillable="true" type="tns:Trace" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ActieRapport" nillable="true" type="tns:ActieRapport" />
+  <xs:simpleType name="ActieResultaat">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Waarschuwing">
+        <xs:annotation>
+          <xs:appinfo>
+            <EnumerationValue xmlns="http://schemas.microsoft.com/2003/10/Serialization/">2</EnumerationValue>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="OK" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="ActieResultaat" nillable="true" type="tns:ActieResultaat" />
+  <xs:complexType name="Trace">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Bericht" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Trace" nillable="true" type="tns:Trace" />
+  <xs:element name="WijzigNaamOpleiding">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="WijzigingNaar" nillable="true" type="tns:OpleidingVal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="WijzigNaamOpleidingResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="WijzigNaamOpleidingResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DeactiveerOpleiding">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Opleiding" nillable="true" type="tns:OpleidingRef" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="OpleidingRef">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:Opleiding">
+        <xs:sequence>
+          <xs:element name="Id" nillable="true" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="OpleidingRef" nillable="true" type="tns:OpleidingRef" />
+  <xs:element name="DeactiveerOpleidingResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DeactiveerOpleidingResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MaakModule">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Module" nillable="true" type="tns:ModuleVal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="ModuleVal">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:Module">
+        <xs:sequence>
+          <xs:element name="Code" nillable="true" type="xs:string" />
+          <xs:element name="EduCode" nillable="true" type="xs:string" />
+          <xs:element name="Id" nillable="true" type="xs:string" />
+          <xs:element name="LinkedModule" nillable="true" type="xs:string" />
+          <xs:element name="Naam" nillable="true" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="ModuleVal" nillable="true" type="tns:ModuleVal" />
+  <xs:complexType name="Module">
+    <xs:sequence />
+  </xs:complexType>
+  <xs:element name="Module" nillable="true" type="tns:Module" />
+  <xs:element name="MaakModuleResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="MaakModuleResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="WijzigNaamModule">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="WijzigingNaar" nillable="true" type="tns:ModuleVal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="WijzigNaamModuleResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="WijzigNaamModuleResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DeactiveerModule">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Module" nillable="true" type="tns:ModuleRef" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="ModuleRef">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:Module">
+        <xs:sequence>
+          <xs:element name="Id" nillable="true" type="xs:string" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="ModuleRef" nillable="true" type="tns:ModuleRef" />
+  <xs:element name="DeactiveerModuleResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DeactiveerModuleResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MaakLink">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Link" nillable="true" type="tns:Link" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Link">
+    <xs:sequence>
+      <xs:element name="Module" nillable="true" type="tns:ModuleRef" />
+      <xs:element name="Opleiding" nillable="true" type="tns:OpleidingRef" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Link" nillable="true" type="tns:Link" />
+  <xs:element name="MaakLinkResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="MaakLinkResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="WijzigLink">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Wijziging" nillable="true" type="tns:Wijziging_x0020_Link" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="Wijziging_x0020_Link">
+    <xs:annotation>
+      <xs:appinfo>
+        <GenericType Name="Wijziging {0}" Namespace="http://teamwise.ogn.eu/services/" xmlns="http://schemas.microsoft.com/2003/10/Serialization/">
+          <GenericParameter Name="Link" Namespace="http://teamwise.ogn.eu/services/" />
+        </GenericType>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element minOccurs="0" name="Naar" nillable="true" type="tns:Link" />
+      <xs:element minOccurs="0" name="Van" nillable="true" type="tns:Link" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Wijziging_x0020_Link" nillable="true" type="tns:Wijziging_x0020_Link" />
+  <xs:element name="WijzigLinkResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="WijzigLinkResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="VerwijderLink">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Link" nillable="true" type="tns:Link" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="VerwijderLinkResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="VerwijderLinkResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Test">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TestResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="TestResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TestFout">
+    <xs:complexType>
+      <xs:sequence />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TestFoutResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="TestFoutResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DoeOnbepaaldeActieOpleiding">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Opleiding" nillable="true" type="tns:OpleidingVal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DoeOnbepaaldeActieOpleidingResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DoeOnbepaaldeActieOpleidingResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DoeOnbepaaldeActieModule">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="Module" nillable="true" type="tns:ModuleVal" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DoeOnbepaaldeActieModuleResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DoeOnbepaaldeActieModuleResult" nillable="true" type="tns:ActieRapport" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:i0="http://teamwise.ogn.eu/services/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="SyncEduSitesService" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:import namespace="http://teamwise.ogn.eu/services/" location="http://localhost:49947/SyncEduSitesService.svc?wsdl=wsdl0" />
+  <wsdl:types />
+  <wsdl:binding name="BasicHttpBinding_SyncOpleidingscatalogusService" type="i0:SyncOpleidingscatalogusService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="MaakOpleiding">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakOpleiding" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="WijzigNaamOpleiding">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigNaamOpleiding" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeactiveerOpleiding">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DeactiveerOpleiding" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="MaakModule">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakModule" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="WijzigNaamModule">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigNaamModule" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeactiveerModule">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DeactiveerModule" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="MaakLink">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakLink" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="WijzigLink">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigLink" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="VerwijderLink">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/VerwijderLink" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Test">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/Test" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="TestFout">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/TestFout" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoeOnbepaaldeActieOpleiding">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DoeOnbepaaldeActieOpleiding" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DoeOnbepaaldeActieModule">
+      <soap:operation soapAction="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DoeOnbepaaldeActieModule" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="SyncEduSitesService">
+    <wsdl:port name="BasicHttpBinding_SyncOpleidingscatalogusService" binding="tns:BasicHttpBinding_SyncOpleidingscatalogusService">
+      <soap:address location="http://localhost:49947/SyncEduSitesService.svc" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

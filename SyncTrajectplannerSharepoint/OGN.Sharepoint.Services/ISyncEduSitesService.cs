@@ -9,16 +9,16 @@ using System.Configuration;
 
 namespace OGN.Sharepoint.Services
 {
-    [ServiceContract(Namespace="http://teamwise.ogn.eu/services/", Name="SyncOpleidingscatalogusService")]
+    [ServiceContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "SyncOpleidingscatalogusService")]
     public interface ISyncEduSitesService
     {
-        [OperationContract(Name="MaakOpleiding")]
-        OperationReport Create([MessageParameter(Name="Opleiding")]EduProgrammeVal edu);
+        [OperationContract(Name = "MaakOpleiding")]
+        OperationReport Create([MessageParameter(Name = "Opleiding")]EduProgrammeVal edu);
 
-        [OperationContract(Name="WijzigNaamOpleiding")]
+        [OperationContract(Name = "WijzigNaamOpleiding")]
         OperationReport Update([MessageParameter(Name = "WijzigingNaar")]EduProgrammeVal edu);
 
-        [OperationContract(Name="DeactiveerOpleiding")]
+        [OperationContract(Name = "DeactiveerOpleiding")]
         OperationReport Delete([MessageParameter(Name = "Opleiding")]EduProgrammeRef edu);
 
         [OperationContract(Name = "MaakModule")]
@@ -61,13 +61,13 @@ namespace OGN.Sharepoint.Services
         /// <summary>
         /// business id
         /// </summary>
-        string Code {get; set;}
+        string Code { get; set; }
         /// <summary>
         /// name of programme or module
         /// </summary>
         string Name { get; set; }
-        string LOISite { get; set; }
-        
+
+
         /// <summary>
         /// the title of the site
         /// </summary>
@@ -77,29 +77,29 @@ namespace OGN.Sharepoint.Services
         /// the relative url of the site
         /// </summary>
         /// <returns></returns>
-        string GetSiteName(); 
+        string GetSiteName();
         /// <summary>
         /// the full url of the site
         /// </summary>
         /// <param name="baseurl">the url of the parent site</param>
         /// <returns></returns>
-        string GetUrl(); 
+        string Url { get; set; }
     }
 
-    [DataContract(Namespace="http://teamwise.ogn.eu/services/", Name="Wijziging {0}")]
+    [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "Wijziging {0}")]
     public class UpdateType<T>
     {
         T _from;
         T _to;
 
-        [DataMember(Name="Van")]
+        [DataMember(Name = "Van")]
         public T From
         {
             get { return _from; }
             set { _from = value; }
         }
 
-        [DataMember(Name="Naar")]
+        [DataMember(Name = "Naar")]
         public T To
         {
             get { return _to; }
@@ -114,7 +114,7 @@ namespace OGN.Sharepoint.Services
         //
         // Summary:
         //     This indicates a successful operation with warnings.
-        [EnumMember(Value="Waarschuwing")]
+        [EnumMember(Value = "Waarschuwing")]
         Warning = 2,
         //
         // Summary:
@@ -124,17 +124,17 @@ namespace OGN.Sharepoint.Services
     }
 
     [CollectionDataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "Trace", ItemName = "Bericht")]
-    public class Messages : List<string> 
+    public class Messages : List<string>
     {
     }
 
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "ActieRapport")]
     public class OperationReport
     {
-        
+
         OperationResultType _type = OperationResultType.OK;
         Messages _msgs = new Messages();
-        
+
         [DataMember(Name = "ActieResultaat")]
         public OperationResultType ResultType
         {
@@ -150,13 +150,15 @@ namespace OGN.Sharepoint.Services
         }
     }
 
-    [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name="Opleiding")]
-    public class EduProgramme: IEduModSite
+    [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "Opleiding")]
+    public class EduProgramme : IEduModSite
     {
         string _id;
         string _code;
         string _name;
-        string _loisite;
+        string _eduWorkSpace;
+        string _eduType;
+        string _url;
 
         public string Id
         {
@@ -176,31 +178,64 @@ namespace OGN.Sharepoint.Services
             set { _name = value; }
         }
 
-        public string LOISite
+        public string EduWorkSpace
         {
-            get { return _loisite; }
-            set { _loisite = value; }
+            get { return _eduWorkSpace; }
+            set { _eduWorkSpace = value; }
+        }
+
+        public string EduType
+        {
+            get { return _eduType; }
+            set { _eduType = value; }
         }
 
         public string GetTitle()
         {
-            return (string.Empty.Equals(this.Code))?this.Name:this.Name + " " + this.Code; 
+            if (string.Empty.Equals(this.Code))
+            {
+                return this.Name;
+            }
+            else
+            {
+                string title = "";
+                if (!string.Empty.Equals(this.EduType))
+                {
+                    title = this.Name + " " + this.Code + " " + this.EduType;
+                }
+                else
+                {
+                    title = this.Name + " " + this.Code;
+                }
+                return title;
+            }
+            return (string.Empty.Equals(this.Code)) ? this.Name : this.Name + " " + this.Code;
         }
 
-        public string GetUrl()
+        public string Url
         {
-            return ConfigurationManager.AppSettings["sp.sitecollection:edu:url"] + this.GetSiteName();
+            get { return _url; }
+            set { _url = value; }
         }
 
 
         public string GetSiteName()
         {
-            return System.Web.HttpUtility.UrlEncode(this.Id);
+            return System.Web.HttpUtility.UrlEncode(this.Code);
         }
     }
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "OpleidingRef")]
-    public class EduProgrammeRef: EduProgramme
+    public class EduProgrammeRef : EduProgramme
     {
+        public EduProgrammeRef(string id, EduProgramme edu)
+            : base()
+        {
+            base.EduType = edu.EduType;
+
+            base.Code = edu.Code;
+            base.Name = edu.Name;
+            base.Id = id;
+        }
         public EduProgrammeRef(string id)
             : base()
         {
@@ -238,21 +273,30 @@ namespace OGN.Sharepoint.Services
             set { base.Name = value; }
         }
 
-        [DataMember(Name = "LOISite", IsRequired = true)]
-        new public string LOISite
+        [DataMember(Name = "EduWorkSpace", IsRequired = true)]
+        new public string EduWorkSpace
         {
-            get { return base.LOISite; }
-            set { base.LOISite = value; }
+            get { return base.EduWorkSpace; }
+            set { base.EduWorkSpace = value; }
+        }
+
+        [DataMember(Name = "EduType", IsRequired = true)]
+        new public string EduType
+        {
+            get { return base.EduType; }
+            set { base.EduType = value; }
         }
     }
 
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "Module")]
-    public class Module: IEduModSite
+    public class Module : IEduModSite
     {
         string _id;
         string _code;
         string _name;
-        string _loisite;
+        string _eduCode;
+        string _linkedModule;
+        string _url;
 
         public string Id
         {
@@ -260,6 +304,11 @@ namespace OGN.Sharepoint.Services
             set { _id = value; }
         }
 
+        public string Url
+        {
+            get { return _url; }
+            set { _url = value; }
+        }
         public string Code
         {
             get { return _code; }
@@ -272,31 +321,58 @@ namespace OGN.Sharepoint.Services
             set { _name = value; }
         }
 
-        public string LOISite
+        public string LinkedModule
         {
-            get { return _loisite; }
-            set { _loisite = value; }
+            get { return _linkedModule; }
+            set { _linkedModule = value; }
+        }
+
+
+        public string EduCode
+        {
+            get { return _eduCode; }
+            set { _eduCode = value; }
         }
 
         public string GetTitle()
         {
-            return (string.Empty.Equals(this.Code)) ? this.Name : this.Name + " " + this.Code; 
+            if (string.Empty.Equals(this.Code))
+            {
+                return this.Name;
+            }
+            else
+            {
+                string title = "";
+                title = this.Name + " " + this.Code;
+                return title;
+            }
         }
 
-        public string GetUrl()
+        public string GetSubSiteUrl(string subSiteName)
         {
-            return ConfigurationManager.AppSettings["sp.sitecollection:mod:url"] + this.GetSiteName();
+            string fullUrl = _url + "/" + subSiteName;
+            return fullUrl;
         }
 
         public string GetSiteName()
         {
-            return System.Web.HttpUtility.UrlEncode(this.Id);
+            return System.Web.HttpUtility.UrlEncode(this.Code);
         }
     }
     [DataContract(Namespace = "http://teamwise.ogn.eu/services/", Name = "ModuleRef")]
     public class ModuleRef : Module
     {
-        public ModuleRef(string id): base()
+        public ModuleRef(string id, Module mod)
+            : base()
+        {
+            base.LinkedModule = mod.LinkedModule;
+            base.Code = mod.Code;
+            base.Name = mod.Name;
+            base.Id = id;
+        }
+
+        public ModuleRef(string id)
+            : base()
         {
             base.Id = id;
         }
@@ -333,11 +409,18 @@ namespace OGN.Sharepoint.Services
             set { base.Name = value; }
         }
 
-        [DataMember(Name = "LOISite", IsRequired = true)]
-        new public string LOISite
+        [DataMember(Name = "EduCode", IsRequired = true)]
+        new public string EduCode
         {
-            get { return base.LOISite; }
-            set { base.LOISite = value; }
+            get { return base.EduCode; }
+            set { base.EduCode = value; }
+        }
+
+        [DataMember(Name = "LinkedModule", IsRequired = true)]
+        new public string LinkedModule
+        {
+            get { return base.LinkedModule; }
+            set { base.LinkedModule = value; }
         }
     }
 

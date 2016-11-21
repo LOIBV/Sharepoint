@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://teamwise.ogn.eu/services/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://teamwise.ogn.eu/services/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://teamwise.ogn.eu/services/Imports">
+      <xsd:import schemaLocation="http://localhost:49947/SyncEduSitesService.svc?xsd=xsd0" namespace="http://teamwise.ogn.eu/services/" />
+      <xsd:import schemaLocation="http://localhost:49947/SyncEduSitesService.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="SyncOpleidingscatalogusService_MaakOpleiding_InputMessage">
+    <wsdl:part name="parameters" element="tns:MaakOpleiding" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_MaakOpleiding_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MaakOpleidingResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_WijzigNaamOpleiding_InputMessage">
+    <wsdl:part name="parameters" element="tns:WijzigNaamOpleiding" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_WijzigNaamOpleiding_OutputMessage">
+    <wsdl:part name="parameters" element="tns:WijzigNaamOpleidingResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DeactiveerOpleiding_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeactiveerOpleiding" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DeactiveerOpleiding_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeactiveerOpleidingResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_MaakModule_InputMessage">
+    <wsdl:part name="parameters" element="tns:MaakModule" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_MaakModule_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MaakModuleResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_WijzigNaamModule_InputMessage">
+    <wsdl:part name="parameters" element="tns:WijzigNaamModule" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_WijzigNaamModule_OutputMessage">
+    <wsdl:part name="parameters" element="tns:WijzigNaamModuleResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DeactiveerModule_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeactiveerModule" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DeactiveerModule_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeactiveerModuleResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_MaakLink_InputMessage">
+    <wsdl:part name="parameters" element="tns:MaakLink" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_MaakLink_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MaakLinkResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_WijzigLink_InputMessage">
+    <wsdl:part name="parameters" element="tns:WijzigLink" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_WijzigLink_OutputMessage">
+    <wsdl:part name="parameters" element="tns:WijzigLinkResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_VerwijderLink_InputMessage">
+    <wsdl:part name="parameters" element="tns:VerwijderLink" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_VerwijderLink_OutputMessage">
+    <wsdl:part name="parameters" element="tns:VerwijderLinkResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_Test_InputMessage">
+    <wsdl:part name="parameters" element="tns:Test" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_Test_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TestResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_TestFout_InputMessage">
+    <wsdl:part name="parameters" element="tns:TestFout" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_TestFout_OutputMessage">
+    <wsdl:part name="parameters" element="tns:TestFoutResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DoeOnbepaaldeActieOpleiding_InputMessage">
+    <wsdl:part name="parameters" element="tns:DoeOnbepaaldeActieOpleiding" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DoeOnbepaaldeActieOpleiding_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DoeOnbepaaldeActieOpleidingResponse" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DoeOnbepaaldeActieModule_InputMessage">
+    <wsdl:part name="parameters" element="tns:DoeOnbepaaldeActieModule" />
+  </wsdl:message>
+  <wsdl:message name="SyncOpleidingscatalogusService_DoeOnbepaaldeActieModule_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DoeOnbepaaldeActieModuleResponse" />
+  </wsdl:message>
+  <wsdl:portType name="SyncOpleidingscatalogusService">
+    <wsdl:operation name="MaakOpleiding">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakOpleiding" message="tns:SyncOpleidingscatalogusService_MaakOpleiding_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakOpleidingResponse" message="tns:SyncOpleidingscatalogusService_MaakOpleiding_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="WijzigNaamOpleiding">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigNaamOpleiding" message="tns:SyncOpleidingscatalogusService_WijzigNaamOpleiding_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigNaamOpleidingResponse" message="tns:SyncOpleidingscatalogusService_WijzigNaamOpleiding_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeactiveerOpleiding">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DeactiveerOpleiding" message="tns:SyncOpleidingscatalogusService_DeactiveerOpleiding_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DeactiveerOpleidingResponse" message="tns:SyncOpleidingscatalogusService_DeactiveerOpleiding_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MaakModule">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakModule" message="tns:SyncOpleidingscatalogusService_MaakModule_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakModuleResponse" message="tns:SyncOpleidingscatalogusService_MaakModule_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="WijzigNaamModule">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigNaamModule" message="tns:SyncOpleidingscatalogusService_WijzigNaamModule_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigNaamModuleResponse" message="tns:SyncOpleidingscatalogusService_WijzigNaamModule_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeactiveerModule">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DeactiveerModule" message="tns:SyncOpleidingscatalogusService_DeactiveerModule_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DeactiveerModuleResponse" message="tns:SyncOpleidingscatalogusService_DeactiveerModule_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MaakLink">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakLink" message="tns:SyncOpleidingscatalogusService_MaakLink_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/MaakLinkResponse" message="tns:SyncOpleidingscatalogusService_MaakLink_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="WijzigLink">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigLink" message="tns:SyncOpleidingscatalogusService_WijzigLink_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/WijzigLinkResponse" message="tns:SyncOpleidingscatalogusService_WijzigLink_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="VerwijderLink">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/VerwijderLink" message="tns:SyncOpleidingscatalogusService_VerwijderLink_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/VerwijderLinkResponse" message="tns:SyncOpleidingscatalogusService_VerwijderLink_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="Test">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/Test" message="tns:SyncOpleidingscatalogusService_Test_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/TestResponse" message="tns:SyncOpleidingscatalogusService_Test_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TestFout">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/TestFout" message="tns:SyncOpleidingscatalogusService_TestFout_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/TestFoutResponse" message="tns:SyncOpleidingscatalogusService_TestFout_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DoeOnbepaaldeActieOpleiding">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DoeOnbepaaldeActieOpleiding" message="tns:SyncOpleidingscatalogusService_DoeOnbepaaldeActieOpleiding_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DoeOnbepaaldeActieOpleidingResponse" message="tns:SyncOpleidingscatalogusService_DoeOnbepaaldeActieOpleiding_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DoeOnbepaaldeActieModule">
+      <wsdl:input wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DoeOnbepaaldeActieModule" message="tns:SyncOpleidingscatalogusService_DoeOnbepaaldeActieModule_InputMessage" />
+      <wsdl:output wsaw:Action="http://teamwise.ogn.eu/services/SyncOpleidingscatalogusService/DoeOnbepaaldeActieModuleResponse" message="tns:SyncOpleidingscatalogusService_DoeOnbepaaldeActieModule_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+</wsdl:definitions>
